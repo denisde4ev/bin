@@ -1,0 +1,19 @@
+#!/usr/bin/env ash
+set -eu
+
+case $# in
+	0) echo required an argument; exit 1;; #0) printf %s\\n "Usage: ${0##*/} [..diff arguments] <file to diff>" >&2; exit 2;;
+	1) i=$1; shift;;
+	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
+	*) . ~/B/__sourceable/pop_to_i.sh;;
+esac
+
+
+case $i in /*) j=$i;; *) j=$PWD/$i; esac
+
+
+o=${0##*/}
+case $o in
+	micro-diff) exec diff "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;
+	micro-diff-*) exec "${o#micro-diff-}" "$@" ~/.config/micro/backups/"${j////"%"}";;
+esac
