@@ -1,0 +1,7 @@
+#!/bin/bash
+
+case $# in
+	0) printf %s "${@,,}"; printf \\n;;
+	*) i=$(cat); printf %s\\n "${i,,}";;
+esac
+

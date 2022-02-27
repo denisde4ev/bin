@@ -1,0 +1,5 @@
+#!/bin/bash
+
+while IFS= read -r -n 1 -s i && [[ $i != $'\4' ]]; do
+	printf %s "${i:-$'\n'}"
+done

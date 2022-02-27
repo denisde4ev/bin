@@ -1,0 +1,4 @@
+#!/bin/bash
+
+(( $# )) || set -- "$(cat)"
+printf %s\\n "${*,,}"

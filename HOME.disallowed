@@ -1,0 +1,47 @@
+#!/bin/sh -e
+case $1 in -x) set -x; shift; esac
+stdin=0
+case $1 in
+	--help|help|-h) printf %s\\n "Usage: ${0##*/} [-] [rm|rm-f|ll|cat|exec]"; exit;;
+	-) shift; stdin=1;
+esac
+cd -- "${HOME:?}" || exit
+[ $# -eq 0 ] && {
+	if [ -t 1 ]; then
+		set -- ll
+	else
+		set -- cat
+	fi
+}
+case $1 in
+	ll|cat) { \ls -A1 -- ~ | wc -l; pwd; echo; } >&2;;
+esac
+
+case $stdin in
+	0) ls -A1 -- ~;;
+	1) shift; cat;;
+esac | \
+grep -vFx \
+\
+-e .cache \
+-e .local \
+-e .ssh \
+-e .config \
+\
+-e .mozilla \
+-e pics \
+\
+-e 0 \
+-e d \
+-e  B \
+-e .B \
+-e .bin \
+-e  bin \
+\
+| \
+case $1 in
+	rm)   shift; xargs -o -d \\n -r --   rm -rvi "$@" --;;
+	rm-f) shift; xargs    -d \\n -r --   rm -rfv "$@" --;;
+	ll)   shift; xargs    -d \\n -r -- $ ll -d   "$@" --;;
+	*) "$@";;
+esac
