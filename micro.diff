@@ -1,7 +1,7 @@
 #!/bin/bash
 #!/bin/ash
 set -eu;
-
+case $1 in -x) set -x; shift;; esac
 IFS='
 '; set -f
 
@@ -10,7 +10,7 @@ diffargs=''
 while
 	case $1 in
 		--) shift && false;;
-		-*) diffargs=$:diffargs}${1}${IFS};;
+		-*) diffargs=${diffargs}${1}${IFS};;
 		*) false;;
 	esac
 do

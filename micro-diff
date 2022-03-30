@@ -14,7 +14,9 @@ case $1 in --help)
 				"Usage: $o [...args] <file path>" \
 				" executes: ${o#"micro-diff-"} [...same args] ~/.config/micro/(<file path>)" \
 			;
+		;;
 		*) exit 2;;
+	esac
 	exit
 esac
 
