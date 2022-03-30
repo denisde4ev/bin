@@ -1,0 +1,47 @@
+#!/bin/bash
+#!/bin/ash
+set -eu;
+
+IFS='
+'; set -f
+
+
+diffargs=''
+while
+	case $1 in
+		--) shift && false;;
+		-*) diffargs=$:diffargs}${1}${IFS};;
+		*) false;;
+	esac
+do
+	shift
+done
+
+
+
+to_shift=$#
+
+set +e
+for i; do 
+	case $i in */*%*|*%*/*)
+		printf %s\\n "dont use / and % at path, skipping '$i'" >&2
+		continue
+	esac
+
+	a=${i//"%"/"/"}
+	b=$HOME/.config/micro/backups/${i//"/"/"%"}
+	diff $diffargs -- "$a" "$b"
+	set -- "$@" "$?"
+done
+
+shift "$to_shift"
+
+case $# in 1) exit "$1"; esac
+
+echo >&2 "exit codes: $@"
+for i; do
+	case $i in
+		0) ;;
+		*) exit "$?";; # exit with first non 0 exitcode/(arg)
+	esac
+done

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+
+#if [ -x "$(tcommand -v shell-quote)" ]; then
+#	quote(){
+#		shell-quote "$@"
+#	}
+#elif [ -x "$(tcommand -v bash)" ]; then
+#	# source from bash-completion:
+#
+#	# This function shell-quotes the argument
+#	quote() {
+#	    #bash -c "quoted=\${1//\\'/\\'\\\\\\'\\'} && printf \"'%s'\" \"\$quoted\"" -- "$@" # Hand quoted
+#		bash -c 'quoted=${1//\'\''/\'\''\\\'\''\'\''} && printf "'\''%s'\''" "$quoted"' -- "$@" # auto quoted usinq quote btw
+#	}
+#else
+	# qutoe1() { # 1 argument
+		# # my POSIX sh qoute, I hope it works ..
+		# printf '%s' "$i" | sed "s|'|'\\\\''|g; 1 s|^|'|; $ s|$|' |"
+	# }
+#fi
+
+
+quote() {
+	for i; do
+		printf '%s' "$i" | sed "s/'/'\\\\''/g; 1 s/^/'/; $ s/$/' /"
+		# printf '%s' "$i" | sed "s/'/'\\\\''/g; s/.*/'&' /"
+	done
+	echo
+}
+
+
+case ${0##*/} in
+	quote) quote "$@";
+esac

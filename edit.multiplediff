@@ -1,0 +1,88 @@
+#!/bin/sh
+case $@ in
+	--help)	printf %s\\n \
+		"${0##*/}: Edit multiple files as diff view" \
+		" (for now no arg)" \
+	;;
+	'') printf %s\\n >&2 "use --help for usage"; exit 1;;
+esac
+
+
+printf %s\\n >&2 \
+	"WARNING: this script is not working"
+	"the script is not updating the line numbers" \
+	"and patch asks for file name to patch" \
+	"" \
+	"type 'ok' to continue" \
+;
+case $(head -1) in ok) ;; *) exit 1; esac
+
+
+set -eu
+
+tmpdir=$(mktemp -d -t "${0##*/}.tmp.XXXXXXXXXX")
+cleanup_exit() {
+	set -- "${1-$?}"
+	rm -rf -- "$tmpdir"
+	exit "$1"
+}
+
+edit_broken_lines=''
+# unset edit_broken_lines # to disable
+
+# todo args parsing
+
+: | { # empty input
+for i; do
+	echo \diff -u -- - "$i"
+	! \diff -u -- - "$i" || { # seems we got empty fil, diff wnt help us this time. write output on my own
+		echo '@@ '
+	}
+done
+} | \
+sed -E '/^@/,/^$|^diff/   s/^\+/ /' > "$tmpdir/original.patch"
+# replace all new lines '+', to be unchanged lines ' '
+# expect to write the end of header as '@@ -0,0 +1,69 @@'
+
+cp -- "$tmpdir"/original.patch "$tmpdir"/edit.patch
+
+while :; do
+	${EDITOR:-vi} ${edit_line:+"+$edit_line"} "$tmpdir/edit.patch"
+	! diff "$tmpdir"/original.patch "$tmpdir"/edit.patch -U 2123456789 > "$tmpdir"/diff.patch || {
+		printf "note: there is nothing changed"
+		cleanup_exit
+	}
+
+	# sed -n '/^ @/,/^ $|^ diff/   /^[+-][^ ]/;   //' "$tmpdir/diff.patch"
+	####### sed -n '4,$ { /^[+-][^ ]/ = }' "$tmpdir/diff.patch"
+	err_lines=$(sed -n '4,$   { /^[^ ][^ ]/   = }' "$tmpdir/diff.patch" | tr '\n' ' ')
+	# '4,$' skip header (3 lines)
+	# '/^[^ ][^ ]/' if there is no pace in first 2 chars, it's an error
+
+	case $err_lines in
+		'') break;; # everithing good, no broken file
+	esac
+
+	# when broken file: print broken lines and ask to fix it
+
+	printf %s\\n "$(printf %s "Error in lines: $err_lines")"
+	printf 'open editor on line (empty for none): '
+	read edit_line || cleanup_exit
+	case $edit_line in [!1-9]*|*[!0-9]*) unset edit_line; esac # reset var if its not an num
+
+	continue # edit the file again
+
+	break # todo, break only when sed does not print anything 
+done
+
+sed -n '4,$   s/ //p' "$tmpdir"/diff.patch -i # replace 1-st or 2-nd char space (i hope)
+
+if patch --forward --strip=1 --input="$tmpdir"/diff.patch .; then
+	echo should be done
+else {
+	echo patch err: $?
+}; fi
+
+
+
+printf %s\\n "$tmpdir" ## TODO:! HERE

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+case $@ in
+	''|-) xargs xdg-open;;
+	*)          xdg-open "$@";;
+esac
