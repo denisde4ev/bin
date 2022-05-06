@@ -1,0 +1,47 @@
+#!/bin/sh
+case $1 in -x) set -x; shift;; esac
+case $@ in --help) set -- -h; esac
+set -eu
+
+IFS='';
+
+case ${1-} in
+	[!-]*) set -- "-$*"; # dont: "-${@#"-"}", reason: busybox ash bug
+esac
+
+filter_start_command='grep -v /\$' # filter directories
+unset filter_end_command
+o=${0##*/}
+
+OPTIND=1
+while getopts pbBh'- ?' i; do
+	case $i in
+		p) filter_start_command='cut -d " " -f 2-';;
+		b) filter_end_command='grep "bin/."';;
+		B) filter_end_command='grep "usr/bin/."';;
+		' '|-) ;; # just ignore it
+		h)
+			printf %s\\n >&2 \
+				"Usage: $o [--pacman|--bin]" \
+				"       $o <p|-p|pacman|--pacman>     cuts everithing before first space" \
+				"       $o <b|-b|--bin>               greps by 'bin/.'" \
+				"       $o <B|-B|--BIN>               greps by 'usr/bin/.'" \
+				"" \
+				"(NOTE: long arguments are not implemented!)" \
+			;
+		;;
+		*) exit;;
+	esac
+done
+
+
+
+
+eval "$( #"
+	paste-args \
+		-d '|' \
+		${filter_start_command+"$filter_start_command"} \
+		"test- -f % -a -x %" \
+		${filter_end_command:+"$filter_end_command"} \
+	;
+)"
