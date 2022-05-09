@@ -3,7 +3,7 @@ PS1=''
 PS2=''
 
 case $1 in
-	*[!"$IFS"]*) ;;
+	*[!" ${TAB_CHAR}${NEW_LINE}${IFS}"]*) ;;
 	*) exit 126;;
 esac
 

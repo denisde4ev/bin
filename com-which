@@ -1,0 +1,83 @@
+#!/bin/sh
+set -feu
+
+err() {
+	printf %s\\n "${0##*/}: $1"
+	[ "${2:-1}" = 0 ] || exit "${2:-1}"
+}
+
+com=''
+whicharg=''
+
+case ${1-} in
+	'') printf %s\\n "see --help for usage"; exit ;;
+	--help|-h)
+		printf %s\\n >&2 \
+			"Usage: ${0##*/} <--com|-c> <command> [--options_for_which] [--] <...which arg OR path>" \
+			"   -c, --com=command      command to execute (by default: echo)" \
+			"   -options_for_which     option arguments that 'which' will be caled with" \
+			"   --                     end of which options" \
+			" commands that have '/' for example some/path/to will not be processed by which" \
+			"" \
+			" WARNING: this sh scripts splits new line to separate argument," \
+			"          ('which' does not have --null-data option and this seems unfixable when running 'which -a')" \
+		;
+		exit
+	;;
+
+	--com|-c) shift; com=$1;;
+	-c*) com=${1#-c};;
+	--com=*) com=${1#--com=};;
+
+	--) com=echo;;
+	-*) err "unmatched option=${1-}, see --help for usage";;
+esac
+shift
+
+[ 0 -lt $# ] || err 'use --help for usage'
+
+
+
+com=${com#"${com%%[!"$IFS"]*}"}   # trim IFS start
+
+case $com in ["$IFS"]*|'')
+	err 'empty command=$comm'
+esac
+
+
+old_IFS=${IFS:-' ${TAB_CHAR:-$'\t'}${NEW_LINE:-$'\n'}'} # enshure that IFS is the same at the end in `exec`
+IFS=${NEW_LINE:-'
+'}
+
+
+if [ "$whicharg" = '--' ]; then
+	whicharg='' # later on code already has an '--'
+else
+	# filter arguments for which:
+	while [ $# -ne 0 ]; do
+		case $1 in
+			--) shift; break;;
+			-*) whicharg="$whicharg$IFS$1";; 
+			# (IFS=>\n) in the var, todo: is it safe and is the best way?
+
+			*) break;;
+		esac
+		shift
+	done
+fi
+
+set -- $( # not quoted # will split by IFS=>(New Line)
+	for i do
+		case $i in
+			# dont even try to look for obvious paths, example: $ com-which --'cp -vi' nano ./nano  (to copy /path/to/nano to ./nano)
+			*/*) printf %s\\n "$i";;
+			*)   printf %s\\n $(which $whicharg -- "$i" 2>/dev/null);;
+		esac
+	done
+)
+
+
+IFS=$old_IFS
+
+[ 0 -lt $# ] || err 'Nothing found for arguments provided'
+exec $com "$@"
