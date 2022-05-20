@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case $1 in
+	--help)
+		printf %s\\n "Usage: ${0##*/} <+|-> [sed args] [files]";
+		exit
+	;;
+	+) shift; set -- -n -e "s/^[ +]//p" "$@";;
+	-) shift; set -- -n -e "s/^[ -]//p" "$@";;
+	*) printf %s\\n >&2 "see, --help for usage"; exit 2;;
+esac
+
+exec sed "$@"
