@@ -1,5 +1,4 @@
 #!/bin/sh
-##arg "$@" >&2
 set -feu
 
 raw=-raw
@@ -19,7 +18,7 @@ done
 
 
 IFS='~'
-i=$(which YN_confirm 2>&-) && . "$i"
+YN_confirm_path=$(which YN_confirm 2>&-) && YN_confirm () { unset -f YN_confirm; . "$YN_confirm_path"; YN_confirm "$@"; } # lazy load the YN_confirm file
 
 for i in $( sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
 # for i in $( $ cout | sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
