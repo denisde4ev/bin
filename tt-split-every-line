@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -feu
+
+i=$(command -v YN_confirm) && . "$i"
+IFS='
+'
+
+for i in $( cat ); do
+# for i in $( $ cout | sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
+	printf %s "$i" | tt -raw -oneshot "$@" || {
+		l=$?
+		YN_confirm "Exit now?" y && exit $l
+	}
+	#                tt -noreport # DOES IT NEED IT ?
+done
