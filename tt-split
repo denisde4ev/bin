@@ -19,10 +19,14 @@ done
 
 IFS='~'
 YN_confirm_path=$(which YN_confirm 2>&-) && YN_confirm () { unset -f YN_confirm; . "$YN_confirm_path"; YN_confirm "$@"; } # lazy load the YN_confirm file
+new_line='
+'
 
 for i in $( sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
 # for i in $( $ cout | sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
 	#                tt -noreport # DOES IT NEED IT ?
+	case $i in *[!' ']*) ;; *) echo >&2 "skiping block of spaces only"; continue;; esac
+
 	printf %s "$i" | \tt $raw -oneshot "$@" || {
 		stat=$?
 		YN_confirm Y "Exit now?" </dev/tty >/dev/tty && exit $stat
