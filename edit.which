@@ -1,0 +1,12 @@
+#!/bin/sh
+
+edit_which () { (
+	IFS=${NEW_LINE:-'
+'}
+	set -f
+	${EDITOR:-vi} $(which "$@")
+) }
+
+case ${0##*/} in edit[._]which|edit[._]which.sh)
+	edit_which "$@"
+esac
