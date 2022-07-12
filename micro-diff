@@ -1,5 +1,5 @@
-#!/usr/bin/env ash
 #!/bin/bash
+#!/usr/bin/env ash
 set -eu
 
 o=${0##*/}
@@ -33,6 +33,7 @@ esac
 unset j
 case $i in /*) j=$i;; *) j=$PWD/$i; esac
 
+# TODO: detect if its ash , else iterate replace / with %
 
 case $o in
 	micro-diff)    exec diff               "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;

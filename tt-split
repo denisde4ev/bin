@@ -1,0 +1,38 @@
+#!/bin/sh
+set -feu
+
+raw=-raw
+to_shift=$#
+while case $to_shift in 0) false; esac; do
+
+	case $1 in
+		-no-raw|-noraw|--no-raw|--noraw) raw='';;
+		-help|--help) exec tt --help;;
+		*) set -- "$@" "$1";;
+	esac
+
+	to_shift=$(( to_shift - 1 ))
+	shift
+
+done
+
+
+IFS='~'
+YN_confirm_path=$(which YN_confirm 2>&-) && {
+	YN_confirm () { # lazy load YN_confirm file
+		unset -f YN_confirm; . "$YN_confirm_path"
+		YN_confirm "$@"
+	}
+}
+new_line='
+'
+
+# for i in $( tr '\n~' '~\n' | sed 's/~~/\n/g; s/~/ ~/g' | tr '\n~' '~\n' ); do # when sed does not support --null-data option, but this still wont work for plan9 tr - does not change new lines
+for i in $( sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
+	case $i in *[!' ']*) ;; *) echo >&2 "skiping block of spaces only"; continue;; esac
+
+	printf %s "$i" | \tt $raw -oneshot "$@" || {
+		stat=$?
+		YN_confirm Y "Exit now?" </dev/tty >/dev/tty && exit $stat
+	}
+done

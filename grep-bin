@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# this command is ment to be used as: `pacman -Qql pacman | grep-bin `ment
+
+# requires: ./test- (optional)
+# requires: ./paste-args (optional)
+
+
+
+case $1 in -x) set -x; shift;; esac
+case $@ in --help) set -- -h; esac
+set -eu
+
+IFS=''
+
+case ${1-} in
+	[!-]*) set -- "-$*"; # dont use: `set -- "-${@#"-"}"`, reason: busybox ash bug
+esac
+
+filter_start_command='grep -v /\$' # filter directories
+unset filter_end_command
+o=${0##*/}
+
+OPTIND=1
+while getopts pbBh- i; do
+	case $i in
+		##p) filter_start_command='cut -d " " -f 2-';;
+		p) filter_start_command='sed "s/^[^ ]*//"';;
+		b) filter_end_command='grep "bin/."';;
+		B) filter_end_command='grep "usr/bin/."';;
+		-) ;; # just ignore it
+		h)
+			printf %s\\n >&2 \
+				"Usage: $o [--pacman|--bin]" \
+				"       $o <p|-p|pacman|--pacman>     cuts everithing before first space" \
+				"       $o <b|-b|--bin>               greps by 'bin/.'" \
+				"       $o <B|-B|--BIN>               greps by 'usr/bin/.'" \
+				"" \
+				"(NOTE: long arguments are not implemented!)" \
+			;
+		;;
+		*) exit;;
+	esac
+done
+
+
+#if command -v test- 2>/dev/null 1>&2; then
+#	test_pipe='test- -f % -a -x %'
+#else
+	test_pipe='xargs -d \\n -r sh -c "for i; do test -f \"\$i\" && test -x \"\$i\" && printf %s\\\\n \"\$i\"; done" -s '
+#fi
+
+
+#if command -v paste-args 2>/dev/null 1>&2; then
+#	eval "$( #"
+#		paste-args \
+#			-d '|' -- \
+#			${filter_start_command+"$filter_start_command"} \
+#			${test_pipe+"$test_pipe"} \
+#			${filter_end_command:+"$filter_end_command"} \
+#		;
+#	)" #"
+#else
+	eval "${filter_start_command:-cat}" | \
+	eval "${test_pipe:-cat}" | \
+	eval "${filter_end_command:-cat}"
+#fi

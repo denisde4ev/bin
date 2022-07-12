@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# this command is simular to 'paste' but it uses just arguments instead of files
+
+set -eu
+
+
+unset arg_d
+
+case $@ in --help) set -- -h; esac
+
+OPTIND=1
+while getopts d: i; do
+	case $i in
+
+	# ref: https://www.geeksforgeeks.org/paste-command-in-linux-with-examples#AP_G4GR_5
+	# -d (delimiter): Paste command uses the tab delimiter by default for merging the files.
+	# The delimiter can be changed to any other character by using the -d option.
+	# If more than one character is specified as delimiter then paste uses it in a circular fashion for each file line separation.
+
+
+	d) arg_d="$OPTARG";;
+	h)
+		printf %s\\n \
+			"Usage: ${0##*/} [OPTIONS]... [ARGS TO JOIN]..." \
+			"" \
+			"  -d LIST   Use delimiters from LIST, not tab" \
+		;
+		exit
+	;;
+	*) exit 2;;
+	esac
+done
+shift "$(( OPTIND - 1 ))"
+
+
+case ${arg_d-} in
+?|'')
+	IFS=${arg_d-$(printf \\t)}
+	printf %s\\n "$*"
+	;;
+*)
+	printf %s\\n >&2 "${0##*/}: -d with more then 1 char is not implemented"
+	exit 126
+
+	# TODO:! If more than one character is specified as delimiter then paste uses it in a circular fashion for each file line separation.
+
+	### printf %s "$1"
+	### shift
+	### for i; do
+	### 	printf %s "$arg_d$i"
+	### esac
+	### ;;
+esac

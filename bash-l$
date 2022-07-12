@@ -1,0 +1,13 @@
+#!/bin/bash -l
+# PS1=''
+
+x=${1#"{1%%[!"$IFS"]*}"} # try to fix $1
+case $x in
+	*[!"$IFS"]*) ;;
+	*) exit 126;;
+esac
+
+shift
+eval "$x ${@+"\"\$@\""}"
+
+# exit # `exit` to prevent 1 empty new line by dash in interactive mode

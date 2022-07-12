@@ -1,4 +1,4 @@
-#!/bin/sh -li
+#!/bin/bash -l
 PS1=''
 PS2=''
 

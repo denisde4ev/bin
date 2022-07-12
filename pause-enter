@@ -1,0 +1,4 @@
+#!/bin/sh
+
+printf %s "Press enter to continue . . ." >&2
+read _ || echo

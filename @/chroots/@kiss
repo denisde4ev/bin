@@ -1,0 +1,72 @@
+#!/bin/sh
+# bash might not be needet, condider sh
+
+set -eu
+
+
+# bin(){
+	# bin=$(command -v -- "$1") && [[ -x $bin ]] && echo "$bin"
+# }
+new_root=/~arcowo/0/chroots/kiss
+
+{
+	[ -w "$new_root" ] && \
+	cd "$new_root"
+} || {
+	[ "$(id -u)" -ne 0 ] || exit 11
+
+	echo >&2 needs root for chroot
+
+	# if [ -x "$(command -v doas)" ];   then exec doas "$0" "$@"
+	# elif [ -x "$(command -v sudo)" ]; then exec sudo "$0" "$@"
+	                                  # else exec su -c '${@:;:} && :' -- root ';' "$0" "$@"
+	# fi
+	if command -v sudo 1>/dev/null; then
+		exec sudo "$0" "$@"
+	else
+		exec su -c "'$0' \"\$@\""
+	fi
+	exit
+}
+
+# fix 1 problem I had with a script trying to write to /home/$SUDO_USER/
+case ${SUDO_USER+x} in x) SUDO_USER=root; esac
+
+
+cd "$new_root"
+
+
+if [ "$(id -u)" -eq 0 ]; then
+	# Todo: add manjaro command for chroot
+	
+	cmd=$( command -v kiss-chroot ) || \
+	{ [[ -x "./bin/kiss-chroot" ]] && cmd=./bin/kiss-chroot; } || \
+	cmd=$(command -v arch-chroot) || \
+	cmd=$(command -v artix-chroot) || { 
+		echo >&2 'No arch-chroot or artix-chroot found on the system'
+		exit 127
+	}
+	[ $# -eq 0 ] && set -- sh -
+	exec env -i $cmd . "$@"
+else
+	echo exec env -i \
+		TERM="$TERM" \
+		SHELL=/bin/sh \
+		USER=root GROUPS=0 \
+		CFLAGS="${CFLAGS:--march=x86-64 -mtune=generic -pipe -Os}" \
+		CXXFLAGS="${CXXFLAGS:--march=x86-64 -mtune=generic -pipe -Os}" \
+		MAKEFLAGS="${MAKEFLAGS:--j$(nproc 2>/dev/null || echo 1)}" \
+		HOME=/root \
+		\
+		proot \
+		-0 \
+		-b /dev \
+		-b /proc \
+		-b /sys \
+		-w / \
+		-r . \
+		\
+		"$@" \
+	;
+		# -0 OR set HOME=/home/demiurge \
+fi

@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+tmpd=$(mktemp -d)
+
+## file=$1; shift # can not use aliases in this way
+. ~/B/__sourceable/pop_to_i.sh
+file=${i?}; unset i
+
+printf %s\\n >&2 "patch will be saved in dir: $tmpd"
+
+
+cp -- "$file" "$tmpd/${1##*/}.original-file"
+${EDITOR:-vi} "$file"
+
+diff "$@" -- "$file" "$tmpd/${1##*/}.original-file" > "$tmpd/${1##*/}.patch" || \
+	case $? in 1) ;; *) exit;; esac
+
+printf %s\\n "patch saved to: $tmpd/${1##*/}.patch"

@@ -77,6 +77,9 @@ done
 
 sed -n '4,$   s/ //p' "$tmpdir"/diff.patch -i # replace 1-st or 2-nd char space (i hope)
 
+## ddg.gg/?q=patch+"malformed+patch"
+## TODO, https://superuser.com/a/1634247
+
 if patch --forward --strip=1 --input="$tmpdir"/diff.patch .; then
 	echo should be done
 else {

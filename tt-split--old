@@ -1,0 +1,14 @@
+#!/bin/sh
+##arg "$@" >&2
+set -feu
+
+IFS='~'
+
+for i in $( sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
+# for i in $( $ cout | sed --null-data 's/\n\n/~/g; s/\n/ \n/g' ); do
+	#                tt -noreport # DOES IT NEED IT ?
+	printf %s "$i" | tt -raw -oneshot "$@" || {
+		stat=$?
+		YN_confirm "Exit now?" Y </dev/tty >/dev/tty && exit $stat
+	}
+done

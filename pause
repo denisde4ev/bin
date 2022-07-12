@@ -1,0 +1,22 @@
+#!/bin/sh
+case $1 in -x) set -x; shift; esac
+
+unset stty
+if [ -t 0 ]; then
+	stty=$(stty -g)
+	trap 'stty -raw echo; stty "$stty"; printf \\r' EXIT QUIT KILL
+	stty raw -echo
+	# stty  -echo
+fi
+
+printf %s "Press any key to continue . . ."
+
+unset e
+#case $(dd if=/dev/tty bs=1 count=1 2>/dev/null) in
+case $(head -c 1) in
+	"$(printf '\003')") ;;
+	?*) e=0;;
+esac
+
+echo
+exit "${e-1}"
