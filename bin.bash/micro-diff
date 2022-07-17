@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/usr/bin/env ash
 set -eu
 
 o=${0##*/}
@@ -20,20 +19,17 @@ case ${1-} in --help)
 	exit
 esac
 
+case $# in 0) echo "use --help for usage" >&2; exit 2; esac
 
-unset i
-case $# in
-	0) echo required an argument, see --help; exit 1;;
-	1) i=$1; shift;;
-	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
-	*) . ~/B/__sourceable/pop_to_i.sh;;
-esac
-
+# pop last arg to var `i`
+# this is from https://github.com/denisde4ev/shrc/blob/master/__sourceable/pop_to_i.bash
+# (for POSIX sh pop_to_i.sh)
+i=$#
+i=${!i}
+set -- "${@:1:$#-1}"
 
 unset j
 case $i in /*) j=$i;; *) j=$PWD/$i; esac
-
-# TODO: detect if its ash , else iterate replace / with %
 
 case $o in
 	micro-diff)    exec diff               "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;
