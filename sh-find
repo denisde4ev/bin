@@ -1,3 +1,4 @@
+#!/bin/bash
 #!/bin/sh
 
 # if case $1 in --com= # consider: add --com=command option
@@ -16,6 +17,7 @@ fi
 
 i=.
 IFS=''
+shopt -s dotglob
 
 while
 	! comm $i/$* || {

@@ -2,23 +2,27 @@
 #!/usr/bin/env ash
 set -eu
 
+micro_conf_bac=~/.config/micro/backups
+
 # when edit this file conider editing and ./bin.bash/micro-diff
 
 o=${0##*/}
 
 case ${1-} in --help)
 	printf %s\\n \
-		"Usage: $o [...args] <file path>" \
-		" executes: ${o#"micro-diff-"} [...same args] ~/.config/micro/(<file path>)" \
+		"Usage: $o [...args] [file path]" \
+		" executes: ${o#"micro-diff-"} [...args] /file/path $micro_conf_bac/%file%path" \
+		" when no file path specifyed (or only armuments): then will list all backups" \
 	;
 	exit
 esac
 
+set -x
 case $# in
 	1) i=$1; shift;;
 	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
 	# consider adding more...: (:/) when run `micro-diff -U 10 --color file` $# = 4 and tish one is frequently used by me
-	*) unset i; . ~/B/__sourceable/pop_to_i.sh;;
+	*) unset i; . ~/B/__sourceable/pop_to_i.sh || echo $?;;
 esac
 
 case ${i+i}:${i-} in :|i:-*) # if only option is specifyed, it will be ignored
@@ -32,4 +36,4 @@ case $i in /*) j=$i;; *) j=$PWD/$i; esac
 
 # TODO: detect if its ash , else iterate replace / with %
 
-exec diff "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;
+exec diff "$@" "$i" $micro_conf_bac/"${j////"%"}";;

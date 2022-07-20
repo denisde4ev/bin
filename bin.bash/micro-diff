@@ -14,24 +14,34 @@ case ${1-} in --help)
 esac
 
 
-# pop last arg to var `i`
-# this is from https://github.com/denisde4ev/shrc/blob/master/__sourceable/pop_to_i.bash
-# (for POSIX sh pop_to_i.sh)
-i=$#
-i=${!i}
-set -- "${@:1:$#-1}"
+{
+	# pop last arg to var `i`
+	# this is from https://github.com/denisde4ev/shrc/blob/master/__sourceable/pop_to_i.bash
+	# (for POSIX sh pop_to_i.sh)
+	i=$#
+	i=${!i}
+	set -- "${@:1:$#-1}"
+}
 
-case ${i+i}:${i-} in :|i:-*)  # if only option is specifyed, it will be ignored
-	case $LSLONG_COMMAND-} in
-		*[!"$IFS"]*) exec ${LSLONG_COMMAND} "$micro_conf_bac";;
-		*)           exec ls -al            "$micro_conf_bac";;
-	esac
+shopt -s nullglob
+
+case ${i+i}:${i-} in
+:|i:-*)  # if only option is specifyed, it will be ignored
+	if [ -t 1 ]; then
+		case $LSLONG_COMMAND-} in
+			*[!"$IFS"]*) exec ${LSLONG_COMMAND} "$micro_conf_bac";;
+			*)           exec ls -al            "$micro_conf_bac";;
+		esac
+	else
+		printf %s\\n "$micro_conf_bac"/*
+		exit
+	fi
+1:-fzf)
+	i=$(printf %s\\n "$micro_conf_bac"/* | fzf) && [ "$i" != '' ] || exit
+	set -- "$i"
 esac
 
 unset j
 case $i in /*) j=$i;; *) j=$PWD/$i; esac
 
-case $o in
-	micro-diff)    exec diff               "$@" "$i" "$micro_conf_bac"/"${j////"%"}";;
-	micro-diff-?*) exec "${o#micro-diff-}" "$@"      "$micro_conf_bac"/"${j////"%"}";;
-esac
+exec diff               "$@" "$i" "$micro_conf_bac"/"${j////"%"}";;
