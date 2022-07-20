@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# for now this file is not executable 
+# I'm trying to eleminate the need for this by using $LSLONG_COMMAND everywhere,
+# I still keep it just in case
+
 case ${LSLONG_COMMAND:+x} in x)
 	exec "${LSLONG_COMMAND}" "$@";
 esac

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for i in "$@"
+#do HELP test|grep --color=auto -I -E '       .{0,12}-'"${i#-}" -A 1
+do HELP --no-result --all test | grep --color=auto -I -E '      .{0,12}-'"${i#-}" -A 1
+done

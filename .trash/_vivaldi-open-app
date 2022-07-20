@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# arg(){ echo "${@@Q}";}
+
+app=$1
+shift
+
+case $app in ./*|[!/]?*)
+	app="$PWD/${app#./}"
+esac
+
+# arg
+vivaldi-stable --app="file:$app" "$@"
+# > /home/arcowo/.bin-personal/_vivaldi-open-app.LOG

@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+i='_NaN_'
+total=0
+count=0
+
+if [ $# -eq 0 ]; then
+	while read -r i; do
+		case $(( i )) in
+			*"${i:-X}"*) ;;
+			# onty digit input
+			# ':-X' is to not parse '' as 0
+
+			*) continue; # expect to print error ? not tested
+		esac
+		: "$(( total += i ))$(( count += 1 ))"
+	done
+else # I cant think of optimal performence to not repead the code? todo?
+	for i; do
+		# 1to1 same code:
+		case $(( i )) in *"${i:-X}"*) ;;*) continue; esac
+		: "$(( total += i ))$(( count += 1 ))"
+	done
+fi
+
+if [ "$i" = _NaN_ ]; then
+	echo NaN # todo test what should expect?
+else
+	echo "$(( total / count ))"
+fi

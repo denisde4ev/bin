@@ -1,0 +1,24 @@
+#!/bin/bash
+
+[ -t 1 ] && if [ "$#" = 1 ]
+then printf '%i:%i ' "$#" "${#1}"
+else printf '%i: '   "$#"
+fi
+
+# echo
+
+# printf '%s\0' "$@" | tr '\0\n ' '\n \0' | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/" | tr '\n \0' '\0\n '
+
+ # | tr '\n' ' '; echo
+# for i; do
+	# echo 1
+	# printf "'"
+	# printf "%s" "$i" | sed "s/'/'\\\\''/g"
+	# printf "' "
+# done
+echo "${0@Q}" "${*@Q}"
+# echo
+
+
+# for i; do
+	# a "$i

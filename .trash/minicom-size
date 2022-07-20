@@ -1,0 +1,14 @@
+#!/bin/sh
+
+
+#80
+#25
+
+
+
+seq 23
+printf 24
+for i in `seq $(( 80 - 2 - 2 ))`; do printf _; done
+printf 80
+echo
+##printf ' '

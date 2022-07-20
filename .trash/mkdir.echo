@@ -1,0 +1,40 @@
+#!/bin/sh
+
+
+# NO LONGER USED!
+# I wrote this script just to use it in `cd $(mkdir.echo newdir)` but now I have cd+ that uses mkdir and then cd
+#
+
+
+
+# just make directory; and then if is directory output it to stdout (separated by null for multiple arguments)
+
+set -eu
+
+unset z_flag
+unset v_flag
+OPTIND=1
+while getopts z i; do
+	case $i in
+		z) z_flag=1;;
+		v) v_flag=1;;
+		*) exit 2;;
+	esac
+done
+shift $((OPTIND-1))
+
+case ${z_flag+1} in
+	1) end_printf='\0';;
+	*) end_printf='\n';;
+esac
+
+unset i
+mkdir_echo(){
+	mkdir -p ${v_flag+"-v"} -- "$i" && \
+	[ -d "$i" ] && printf %s"$end_printf" "$i"
+}
+
+case $1 in
+	-) while IFS= read -r i; do mkdir_echo; done ;;
+	*) for i; do mkdir_echo; done;;
+esac

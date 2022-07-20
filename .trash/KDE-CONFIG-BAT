@@ -1,0 +1,1 @@
+find ~/.config/ -maxdepth 2 -type f | grep -iEe 'kde|plasma|kwin' | xargs bat

@@ -1,0 +1,80 @@
+#!/bin/bash --posix
+# keep the bash as interpreter only for the 'help' buildin
+
+o=${0##*/}
+inval_arg() { printf %s\\n "$o: invalid option -- $1, use $o $o to --help" >&2; exit 2; }
+
+all=
+help=
+man=
+info=
+tldr=
+_help=
+noresult=false
+
+while :; do
+	case $1 in
+		-h|--help|'')
+			printf %s\\n \
+				"Usage: $o [--all] [--no-<*>] [--] <COMMAND|--help>" \
+				" search in (help if bash), man, info, (tldr - assuming installed )" \
+				" and at the end in the COMMAND with argument --help" \
+				"" \
+				"   --all        don't stop seanching when found" \
+				"   -h, --help   display this help and exit" \
+				"   --no-<*>     do not search in: tldr -> --no-tldr" \
+				"                   '*': tldr, bash-help, man, info, tldr, --help" \
+				"   HELP         a fun one " \
+				"($o in $o)" \
+			;
+			[ "$1" != '' ]; exit
+		;;
+		-x) set -x;;
+		--all|-a) all=y;;
+		--no-*)
+			case "${1#--no-}" in
+				help|bash-help)  unset help;;
+				man)             unset man;;
+				info)            unset info;;
+				tldr)            unset tldr;;
+				-help|--help)    unset _help;;
+				result)          unset noresult;;
+				*) inval_arg "$i";;
+			esac
+		;;
+		# HELP)
+		--) shift;  break;;
+		-*) inval_arg "$1";;
+		*) break;;
+	esac
+	shift
+done
+
+done_in () { # (HELP_in_cmd, exit_code)
+	[ "x$1" = xhelp ] && set -- 'bash:help'
+	"$noresult" || printf >&2 %s "($o in $1)"
+
+	if [ "x$1" = xtldr ]; then
+		"$noresult" || printf >&2 '\n ---------------- \n'
+	else
+		[ -n "$all" ] || exit "${2:-0}"
+	fi
+}
+
+# IFS=-;set -- "$*" # conat args usging '-'
+IFS='-'
+# has_bash_help=$(command -v help)
+for i in "${BASH:+${help:-help}}" "${man:-man}" "${info:-info}" "${tldr:-"$(command -v tldrs 2>/dev/null)"}"; do
+	"${i:-false}" "$*" 2>/dev/null && done_in "$i"
+done
+
+
+command "${_help-"${@:-}"}" --help
+
+case $i in
+	0) done_in '--help';
+	*) eval "printf >&2 %s '(nothing fond)'; exit $?"
+esac
+
+# tldr must be modefied to output error (not found) to etderr
+# tldr "$1" | sed "s/tldr page for command $1 not found//"

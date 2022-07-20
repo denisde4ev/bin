@@ -1,0 +1,112 @@
+#!/bin/sh
+set -eu
+
+
+unset file block i path
+com=umount
+
+i=$#
+while case $i in 0) false; esac; do
+	case $1 in # try to parse some arguments
+		-v|-l) set -- "$@" "$1";; # NOTE: 'umount-fzf -v' is in my aliases
+		# TODO: add --verbose support for this script!
+		--com) com=${2:?"option '--com' requires an argument"}; shift;; # additional arg
+		*) break;;
+	esac
+	shift
+	i=$(( i - 1))
+done
+
+
+case $i in 0) ;; *) # skip when no (unknown) additional argumens given
+	: "${NEW_LINE=
+	}"
+
+	err='use --help for usage'
+	err() {
+		printf %s\\n >&2 "${0##*/}: ${1-$err}"
+		exit "${2-2}"
+	}
+
+
+	case $1 in
+	--)
+		case $# in
+			2) ;; # all ok, only 1 arg after '--'
+			*) err " too many arguments, got: '--' and $# more";;
+		esac
+		path=$2
+		shift 2
+		;;
+	--help)
+		printf %s\\n >&2 "Usage: ${0##*/} [mounted path | block dev path] [...umount args]"
+		[ $# -eq 1 ]; exit
+		;;
+	-*)
+		# assign last arg to `$file` AND `pop` it from args
+		i=$#
+		while case $i in 1|0) false; esac; do
+			set -- "$@" "$i"
+			shift
+			i=$(( i - 1 ))
+		done
+		#unset i
+		case $1 in -*) err; esac 
+		path=$1
+		shift
+		;;
+	[!-]*)
+		file=$1; shift
+		;;
+	*)
+		err
+		;;
+	esac
+
+	case $com in ["$IFS"]*) err "command is not allowed to start with chars from IFS"; esac
+
+
+
+	get_block_of_file() {
+		block=$(
+			df -- "$file" | grep -v 'Filesystem.*Mounted on'
+		)
+		block=${block%%" "*}
+	}
+
+
+	unset ftype
+	if [ -L "$file" ]; then
+		file=$( readlink -f -- "$file" )
+		if [ -b "$file" ]; then
+			ftype=b
+		else
+			get_block_of_file
+			YN_confirm \
+				"path '$file' is not block device but it is symlink,${NEW_LINE-
+				}do you want to use get the path of symlink" \
+				'yes' \
+			|| {
+				#### printf %s\\n >&2 "nothing have been done" # ...
+				exit 1
+			}
+		fi
+	else
+		# b=block OR e=exist
+		[ -b "$file" ] && ftype=b || \
+		[ -e "$file" ] && ftype=e || \
+		err "file dos not exist: '$file'"
+	fi
+
+	case $ftype in
+		b) block=$file;;
+		e) get_block_of_file;;
+	esac
+esac
+
+fzf -m --query="${block-}" < /proc/mounts | \
+while read -r _mounts_block mounts_path _more_mounts_; do
+	set -f
+	${com:?} "$@" -- "$mounts_path"
+done
+
