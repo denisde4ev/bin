@@ -1,24 +1,43 @@
 #!/bin/bash
+#!/bin/sh # 1 line to be posix sh
 #!/bin/ash
 set -u
 
 
-case $# in 1)
+case $# in 1) # can handle only one arg/file (and there is no point for parsing 0 args)
 	micro_conf_bac=~/.config/micro/backups
 	i=$1
 
 	unset j
 	case $i in /*) j=$i;; *) j=$PWD/$i;; esac
-	j=$micro_conf_bac"/"${j////"%"}
+	j=$micro_conf_bac/${j////"%"} # this is the only non POSIX sh line
+	#j=$(printf %s\\n "${j}%" | tr / %)
+	#j=${j%"%"} # keep the new line at the end of argument
 
 	[ ! -f "$j" ] || {
-		$ diff -s -u -- "$i" "$j"
+		[ -f "$1" ] || i=/dev/null
+		printf %s' ' >&2 ${LSLONG_COMMAND:-ls -al} -d -- "$i" "$j"
+		ecoh >&2
+
+		${LSLONG_COMMAND:-ls -al} -d -- "$i" "$j"
+		if YN_confirm y 'A backup was detected for this file. Do you want to see the diff output'; then
+			$ diff -u -- "$i" "$j"
+		else
+			cmp -s -- "$i" "$j"
+		fi
 		case $? in
-			0) rm -vi -- "$j" < /dev/tty && [ ! -f "$j" ] || exit;;
-			1) exit;;
-			*) printf %s\\n "note: unexpected diff exit code: \$?=$?";;
+			0) # same files -> offer to remove the backup
+				YN_confirm y "Backup file does not contain any changes, Do you want to remove the backup and edit the file?" >&2
+				rm -vi -- "$j" < /dev/tty \
+				&& [ ! -f "$j" ] \
+				|| exit
+			;;
+			1) # differ files. do not edit, just exit
+				printf %s\\n >&2 "files differ, wont run micro"
+				exit
+			;;
+			*) printf %s\\n >&2 "note: unexpected diff exit code: \$?=$?"; exit 3;;
 		esac
-		echo ---- >&2
 	}
 	
 esac

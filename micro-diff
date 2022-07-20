@@ -1,4 +1,5 @@
 #!/bin/bash
+#!/bin/ash
 set -eu
 
 # when edit this file conider editing ./bin.bash/micro-diff as well
