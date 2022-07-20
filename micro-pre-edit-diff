@@ -1,0 +1,26 @@
+#!/bin/bash
+#!/bin/ash
+set -u
+
+
+case $# in 1)
+	micro_conf_bac=~/.config/micro/backups
+	i=$1
+
+	unset j
+	case $i in /*) j=$i;; *) j=$PWD/$i;; esac
+	j=$micro_conf_bac"/"${j////"%"}
+
+	[ ! -f "$j" ] || {
+		$ diff -s -u -- "$i" "$j"
+		case $? in
+			0) rm -vi -- "$j" < /dev/tty && [ ! -f "$j" ] || exit;;
+			1) exit;;
+			*) printf %s\\n "note: unexpected diff exit code: \$?=$?";;
+		esac
+		echo ---- >&2
+	}
+	
+esac
+
+exec micro "$@"
