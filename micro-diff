@@ -2,40 +2,34 @@
 #!/usr/bin/env ash
 set -eu
 
+# when edit this file conider editing and ./bin.bash/micro-diff
+
 o=${0##*/}
 
 case ${1-} in --help)
-	case $o in
-		micro-diff)
-			printf %s\\n "Usage: $o [..diff arguments] <file to diff>"
-		;;
-		micro-diff-?*)
-			printf %s\\n \
-				"Usage: $o [...args] <file path>" \
-				" executes: ${o#"micro-diff-"} [...same args] ~/.config/micro/(<file path>)" \
-			;
-		;;
-		*) exit 2;;
-	esac
+	printf %s\\n \
+		"Usage: $o [...args] <file path>" \
+		" executes: ${o#"micro-diff-"} [...same args] ~/.config/micro/(<file path>)" \
+	;
 	exit
 esac
 
-
-unset i
 case $# in
-	0) echo required an argument, see --help; exit 1;;
 	1) i=$1; shift;;
 	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
-	*) . ~/B/__sourceable/pop_to_i.sh;;
+	# consider adding more...: (:/) when run `micro-diff -U 10 --color file` $# = 4 and tish one is frequently used by me
+	*) unset i; . ~/B/__sourceable/pop_to_i.sh;;
 esac
 
+case ${i+i}:${i-} in :|i:-*) # if only option is specifyed, it will be ignored
+	case $LSLONG_COMMAND-} in
+		*[!"$IFS"]*) exec ${LSLONG_COMMAND} "$micro_conf_bac";;
+		*)           exec ls -al            "$micro_conf_bac";;
+	esac
+esac
 
-unset j
 case $i in /*) j=$i;; *) j=$PWD/$i; esac
 
 # TODO: detect if its ash , else iterate replace / with %
 
-case $o in
-	micro-diff)    exec diff               "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;
-	micro-diff-?*) exec "${o#micro-diff-}" "$@"      ~/.config/micro/backups/"${j////"%"}";;
-esac
+exec diff "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;

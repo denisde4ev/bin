@@ -1,25 +1,18 @@
 #!/bin/bash
 set -eu
 
+# when edit this file conider editing and ../micro-diff
+
+micro_conf_bac=~/.config/micro/backups
+
+
 o=${0##*/}
 
 case ${1-} in --help)
-	case $o in
-		micro-diff)
-			printf %s\\n "Usage: $o [..diff arguments] <file to diff>"
-		;;
-		micro-diff-?*)
-			printf %s\\n \
-				"Usage: $o [...args] <file path>" \
-				" executes: ${o#"micro-diff-"} [...same args] ~/.config/micro/(<file path>)" \
-			;
-		;;
-		*) exit 2;;
-	esac
+	printf %s\\n "Usage: $o [..diff arguments] [file to diff]"
 	exit
 esac
 
-case $# in 0) echo "use --help for usage" >&2; exit 2; esac
 
 # pop last arg to var `i`
 # this is from https://github.com/denisde4ev/shrc/blob/master/__sourceable/pop_to_i.bash
@@ -28,10 +21,17 @@ i=$#
 i=${!i}
 set -- "${@:1:$#-1}"
 
+case ${i+i}:${i-} in :|i:-*)  # if only option is specifyed, it will be ignored
+	case $LSLONG_COMMAND-} in
+		*[!"$IFS"]*) exec ${LSLONG_COMMAND} "$micro_conf_bac";;
+		*)           exec ls -al            "$micro_conf_bac";;
+	esac
+esac
+
 unset j
 case $i in /*) j=$i;; *) j=$PWD/$i; esac
 
 case $o in
-	micro-diff)    exec diff               "$@" "$i" ~/.config/micro/backups/"${j////"%"}";;
-	micro-diff-?*) exec "${o#micro-diff-}" "$@"      ~/.config/micro/backups/"${j////"%"}";;
+	micro-diff)    exec diff               "$@" "$i" "$micro_conf_bac"/"${j////"%"}";;
+	micro-diff-?*) exec "${o#micro-diff-}" "$@"      "$micro_conf_bac"/"${j////"%"}";;
 esac
