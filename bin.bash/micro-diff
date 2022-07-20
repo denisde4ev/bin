@@ -1,47 +1,52 @@
 #!/bin/bash
 set -eu
 
-# when edit this file conider editing and ../micro-diff
+# when edit this file conider editing ../micro-diff as well
 
 micro_conf_bac=~/.config/micro/backups
 
 
-o=${0##*/}
-
 case ${1-} in --help)
-	printf %s\\n "Usage: $o [..diff arguments] [file to diff]"
+	printf %s\\n \
+		"Usage: ${0##*/} [..diff arguments] [file to diff]" \
+	;
 	exit
 esac
 
+err() { printf %s\\n >&2 "${0##*/}: $1"; exit $2; }
 
-{
+case $# in 0) ;; *)
 	# pop last arg to var `i`
 	# this is from https://github.com/denisde4ev/shrc/blob/master/__sourceable/pop_to_i.bash
 	# (for POSIX sh pop_to_i.sh)
 	i=$#
 	i=${!i}
 	set -- "${@:1:$#-1}"
-}
+esac
+
 
 shopt -s nullglob
 
 case ${i+i}:${i-} in
-:|i:-*)  # if only option is specifyed, it will be ignored
+:|i:-*)  # if no arguments or if last arg is armument (woraround for this check is ./-file)
 	if [ -t 1 ]; then
-		case $LSLONG_COMMAND-} in
-			*[!"$IFS"]*) exec ${LSLONG_COMMAND} "$micro_conf_bac";;
-			*)           exec ls -al            "$micro_conf_bac";;
-		esac
+		ls -al "$micro_conf_bac"/*
 	else
 		printf %s\\n "$micro_conf_bac"/*
-		exit
 	fi
-1:-fzf)
-	i=$(printf %s\\n "$micro_conf_bac"/* | fzf) && [ "$i" != '' ] || exit
-	set -- "$i"
+	exit
+	;;
 esac
 
-unset j
-case $i in /*) j=$i;; *) j=$PWD/$i; esac
+[ ! -d "$i" ] || err "diffing dir is not implemented" 3
 
-exec diff               "$@" "$i" "$micro_conf_bac"/"${j////"%"}";;
+unset j
+case $i in /*) j=$i;; *) j=$PWD/$i;; esac
+j=$micro_conf_bac"/"${j////"%"}
+
+[ -t 1 ] || {
+	printf %s\\n "$j"
+	exit
+}
+
+exec diff "$@" "$i" "$j"

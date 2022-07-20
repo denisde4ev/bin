@@ -1,39 +1,52 @@
 #!/bin/bash
-#!/usr/bin/env ash
 set -eu
+
+# when edit this file conider editing ./bin.bash/micro-diff as well
 
 micro_conf_bac=~/.config/micro/backups
 
-# when edit this file conider editing and ./bin.bash/micro-diff
-
-o=${0##*/}
 
 case ${1-} in --help)
 	printf %s\\n \
-		"Usage: $o [...args] [file path]" \
-		" executes: ${o#"micro-diff-"} [...args] /file/path $micro_conf_bac/%file%path" \
-		" when no file path specifyed (or only armuments): then will list all backups" \
+		"Usage: ${0##*/} [..diff arguments] [file to diff]" \
 	;
 	exit
 esac
 
-set -x
+err() { printf %s\\n >&2 "${0##*/}: $1"; exit $2; }
+
 case $# in
 	1) i=$1; shift;;
 	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
 	# consider adding more...: (:/) when run `micro-diff -U 10 --color file` $# = 4 and tish one is frequently used by me
 	*) unset i; . ~/B/__sourceable/pop_to_i.sh || echo $?;;
+
+
 esac
 
-case ${i+i}:${i-} in :|i:-*) # if only option is specifyed, it will be ignored
-	case $LSLONG_COMMAND-} in
-		*[!"$IFS"]*) exec ${LSLONG_COMMAND} "$micro_conf_bac";;
-		*)           exec ls -al            "$micro_conf_bac";;
-	esac
+
+
+
+case ${i+i}:${i-} in
+:|i:-*)  # if no arguments or if last arg is armument (woraround for this check is ./-file)
+	ll_or_print=$micro_conf_bac
+	. ~/B/__sourceable/ll_or_print.sh
+
+
+
+	exit
+	;;
 esac
 
-case $i in /*) j=$i;; *) j=$PWD/$i; esac
+[ ! -d "$i" ] || err "diffing dir is not implemented" 3
 
-# TODO: detect if its ash , else iterate replace / with %
+unset j
+case $i in /*) j=$i;; *) j=$PWD/$i;; esac
+j=$micro_conf_bac"/"${j////"%"}
 
-exec diff "$@" "$i" $micro_conf_bac/"${j////"%"}";;
+[ -t 1 ] || {
+	printf %s\\n "$j"
+	exit
+}
+
+exec diff "$@" "$i" "$j"
