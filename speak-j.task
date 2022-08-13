@@ -1,0 +1,3 @@
+#!/bin/sh
+
+sed -uEe 's/(^---------------[^ ]* ).*$/was written by \1/' | speak -v bg "$@"

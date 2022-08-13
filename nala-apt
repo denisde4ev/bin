@@ -1,0 +1,9 @@
+#!/bin/sh
+
+case $1 in
+	full-upgrade)
+		nala upgrade
+	;;
+	-*) exec apt "$@";;
+	*) exec nala "$@";;
+esac
