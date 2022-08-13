@@ -1,0 +1,28 @@
+#!/bin/sh
+case $1 in -x) set -x; shift; esac
+
+
+case $1 in [0-9]*) vol=$(( $1 - 1 ));; *) unset vol; esac
+
+traps='3 15 2 EXIT'
+trap "trap - $traps; set -x; termux-media-player stop" $traps
+#for i in $traps; do
+#	trap "echo ---- exits $i ----; trap - 3 15 2 EXIT; set -x; termux-media-player stop" $i
+#done
+
+
+(
+
+#for i in `seq 64`; do trap "echo trap $i" $i; done 
+
+
+
+cat /dev/null | su -c "echo --- su starting ---;  sleep .1; media volume --set ${vol-25}; sleep .1; media volume --adj raise; echo ---  su done  ---" | cat > /dev/null  # cat to fix sudoes not wait
+termux-media-player play ~/.config/termux-media-player/find-play-song
+
+echo "sleeping, or kill me $$" >&2
+
+) 0<&- & # fix su reands input for no reason
+
+head -1 >&-
+kill $! $$

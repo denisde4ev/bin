@@ -1,0 +1,11 @@
+#!/bin/sh
+set -x 
+##command -v arg >/dev/null || exec $ '.' "$0" "$@" 
+
+echo Press enter to copy: 
+$ arg "$@"
+read i
+
+echo "$@" | $ cin
+
+#env ${EDITOR:-vi} "$@"

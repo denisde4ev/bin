@@ -1,0 +1,21 @@
+#!/data/data/com.termux/files/usr/bin/sh
+
+# /data/data/com.termux/files/usr/libexec/termux-api Clipboard | \
+#   tee ~/.cache/termux-clipboard.tmp | \
+#   grep -q . && \
+#   mv -f ~/.cache/termux-clipboard.tmp ~/.cache/termux-clipboard
+# cat ~/.cache/termux-clipboard
+
+# /data/data/com.termux/files/usr/libexec/termux-api Clipboard | tee ~/.cache/termux-clipboard.tmp
+# if [ -s ~/.cache/termux-clipboard.tmp ]; then
+#   mv -f ~/.cache/termux-clipboard.tmp ~/.cache/termux-clipboard
+# else
+#   cat ~/.cache/termux-clipboard
+# fi
+
+/data/data/com.termux/files/usr/libexec/termux-api Clipboard > ~/.cache/termux-clipboard.tmp
+[ -s ~/.cache/termux-clipboard.tmp ] && mv -f ~/.cache/termux-clipboard.tmp ~/.cache/termux-clipboard
+cat ~/.cache/termux-clipboard
+
+
+# -s FILE        True if file exists and is not empty.

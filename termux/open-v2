@@ -1,0 +1,58 @@
+#!/bin/sh
+set -eu
+
+case $@ in
+	--help)
+		printf %s\\n \
+			"Usage: ${0##*/} --help" \
+		;
+		exit
+	;;
+	'')
+		printf %s\\n >&2 "use --help for help message"
+		exit 2
+	;;
+esac
+
+
+o=${0##*/}
+puts() {
+	printf %s\\n "$@"
+}
+err() {
+	puts "$o: err: $1"
+	exit "${2-2}"
+}
+
+
+{
+	unset opt_a
+	unset opt_b val_b
+	while [ $# -ne 0 ]; do
+		case $1 in
+			--) shift; break;;
+			--a) opt_a='';;
+			--b) opt_b=''; shift; val_b=${1?"option --b requires an argument"};;
+			--b=) opt_b=${1#"--b"};;
+
+			*) printf %s\\n >&2 "err: error in arg: $1"; exit 2;;
+			*) err "error in arg: $1" 2;;
+		esac
+		shift
+	done
+}
+# OR 
+{
+	unset opt_a
+	unset opt_b val_b
+
+	OPTIND=1
+	while getopts ab: i; do
+		case $i in
+			a) opt_a='';;
+			b) opt_b=''; opt_b=$OPTARG;;
+			*) exit 2;;
+		esac
+	esac
+}
+

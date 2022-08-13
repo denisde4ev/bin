@@ -1,0 +1,60 @@
+#!/bin/sh
+case $1 in -x) set -x; shift; esac
+
+fix_su() {
+	# if stdin is not from terminal
+	# then both stdout and stderr must not be terminal
+	# OR if the script(current subprocess) is in background
+	# then all stdin, stdout and stderr must not be terminal
+
+
+	if [ "$1" = fg ] && [ -t 0 ]; then
+		shift
+		if [ -t 0 ] && [ -t 1 ] && [ -t 2 ]; then
+			: 0 cat
+			su -c "$@"
+		else
+			: 2 cats
+			{ { su "$@" | cat; } 3>&2 2>&1 1>&3 | cat; } 3>&2 2>&1 1>&3
+		fi
+	else
+		# note: this cound be optimized
+		# by checking if some of stdin, stdout or stderr
+		# is already not terminal
+		shift
+		: 3 cats
+		cat | { { su "$@" | cat; } 3>&2 2>&1 1>&3 | cat; } 3>&2 2>&1 1>&3
+	fi
+}
+
+
+case $1 in [0-9]*) vol_m0=$(( $1 - 0 ));; *) unset vol_m0; esac
+
+traps='3 15 2'
+
+
+{
+
+	# TODO/consider: on exit or trap, set back to previous media volume level
+	fix_su bg -c "media volume --set ${vol_m0-24}"
+	fix_su bg -c "media volume --adj lower; media volume --adj raise" & # fix volume level is set but real audio did not change
+	trap "trap - $traps; set -x; termux-media-player stop" $traps
+	#for i in $traps EXIT; do
+	#	trap "echo ---- exits $i ----; trap - 3 15 2 EXIT; set -x; termux-media-player stop" $i
+	#done
+	termux-media-player play ~/.config/termux-media-player/find-play-song
+
+
+} 0<&- & # fix su reands input for no reason
+
+
+trap "trap - $traps; set -x; termux-media-player stop" EXIT
+
+echo "press enter or kill me \$\$='$$' to stop playign" >&2
+
+if type pause 2>/dev/null 1>&2; then
+	pause
+else
+	echo >&2 Press enter...
+	head -1 >/dev/null
+fi

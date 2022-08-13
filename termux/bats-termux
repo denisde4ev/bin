@@ -1,0 +1,3 @@
+#!/bin/sh
+
+termux-battery-status | jq -r '(.percentage|tostring)+(.status/""|.[0])'

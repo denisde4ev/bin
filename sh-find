@@ -1,0 +1,11 @@
+#!/bin/sh
+
+i=$*
+IFS=''
+
+while
+	! ll -d -- $i || \
+	head -1 >/dev/null
+do
+	i=*/$i
+done

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+
+pipe2=
+eval " ( $1 ) " 

@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -eu
+
+# unset flag_all
+# while getopts a- i; do case $i in
+# -)
+# 	shift "$(( OPTIND - 1 ))"
+# 	OPTIND=1
+# 	case $i in
+# 	-[!-]*-*)
+# 		printf %s\\n \
+# 		"${0##*/}: illegal option -- -" \
+# 		;
+# 		exit 1
+# 	;;
+# 	--help)
+# 		printf %s\\n "Usage: ${0##*/}" >&2
+# 		exit
+# 	;;
+# 	--all) flag_all=1;;
+# 	esac
+# ;;
+# a) flag_all=1;;
+# 
+# *)
+# esac; done
+
+case $@ in [!0-9+-]*[!0-9]*) case $@ in # when is not num
+--help)
+	prirtf %s\\n >&2
+	exit
+;;
+*)
+	echo 'use --help for usage' >&2
+	exit 111
+;;
+esac; esac
+
+c=$1
+
+str=$(cat; printf x); str=${str%x}
+
+while case $c in 0) false; esac; do
+	printf %s "$str"
+	c=$(( c - 1 ))
+done

@@ -1,0 +1,41 @@
+#!/bin/sh -e
+set -f; IFS='
+'
+cd || exit $?
+
+case $1 in
+	--help) echo "Usage: ${0##*/} [allowed files input file] [-rm | -rm-rf]  -[...ls args]
+   Print or remove not allowed files in your home directory
+   If no input file specifyed will try to use \$0.allowlist
+   And print curent staus of directoryes + files"; exit
+	;;
+	-edit)
+		exec edit "$0.allowlist"; shift;
+	;;
+	-*|'')
+		[ -e "$0.allowlist" ] || {  echo >&2 'No file to read allowed files specified'; exit 3;  }
+		allowed_read=$0.allowlist
+	;; *)
+		[ -r "$1" ]   || {  echo >&2 'File to read allowed files is not readable by you or does not exist'; exit 3;  }
+		allowed_read=$1; shift
+	;;
+esac
+
+pwd >&2; r=; case $1 in -rm|-rm-rf) r=$1; shift; esac
+
+ls -A1 | grep -vxFf "$allowed_read" | \
+	if [ -n "$r" ]; then
+		if [ $r = -rm-rf ]
+		then xargs    -d \\n -r rm -rfv --
+		else xargs -o -d \\n -r rm -riv --
+		fi
+	elif [ -t 1 ] || [ $# != 0 ]; then
+		unset IFS
+		xargs -d \\n -r ll -d "$@" --
+	else cat; fi
+
+set +f
+len() { if [ -e "$1" ]; then echo $#; else echo 0; fi; }
+total=$(( $(len * ) + $(len .* ) -2 ))
+dirs=$((  $(len */) + $(len .*/) -2 ))
+printf %s\\n '' "$dirs dirs + $(( total - dirs )) files = $total" >&2

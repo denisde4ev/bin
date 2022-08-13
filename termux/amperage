@@ -1,0 +1,149 @@
+#!/ /bin/sh
+##echo 'script not done!' >&2; exit 1;
+
+ # done, used in output
+
+
+{
+while IFS= read -r i; do
+	case $i in
+		POWER_SUPPLY_NAME=*)
+			#battery
+		;;
+		POWER_SUPPLY_INPUT_SUSPEND=*)
+			#0
+		;;
+		POWER_SUPPLY_STATUS=*) #Discharging;;
+		POWER_SUPPLY_HEALTH=*) #Good;;
+		POWER_SUPPLY_PRESENT=*)
+			#1
+		;;
+		POWER_SUPPLY_CHARGE_TYPE=*)
+			#N/A
+		;;
+		POWER_SUPPLY_CAPACITY=*)
+			#36
+		;;
+		POWER_SUPPLY_CHARGE_NOW=*)
+			#19
+		;;
+		POWER_SUPPLY_CHG_PROTECT_STATUS=*)
+			#0
+		;;
+		POWER_SUPPLY_FASTCHG_STATUS=*)
+			#0
+		;;
+		POWER_SUPPLY_FASTCHG_STARTING=*)
+			#0
+		;;
+		POWER_SUPPLY_CUTOFF_VOLT_WITH_CHARGER=*)
+			#3250
+		;;
+		POWER_SUPPLY_CHARGING_ENABLED=*)
+			#1
+		;;
+		POWER_SUPPLY_INPUT_CURRENT_MAX=*)
+			#0
+		;;
+		POWER_SUPPLY_IS_AGING_TEST=*)
+			#0
+		;;
+		POWER_SUPPLY_SYSTEM_TEMP_LEVEL=*)
+			#0
+		;;
+		POWER_SUPPLY_CHARGER_TEMP_MAX=*)
+			#803
+		;;
+		POWER_SUPPLY_INPUT_CURRENT_LIMITED=*)
+			#0
+		;;
+		POWER_SUPPLY_VOLTAGE_NOW=*)
+			#3789000
+		;;
+		POWER_SUPPLY_VOLTAGE_MAX=*)
+			#-22
+		;;
+		POWER_SUPPLY_VOLTAGE_QNOVO=*)
+			#-22
+		;;
+		POWER_SUPPLY_CURRENT_NOW=*)
+			#134000
+		;;
+		POWER_SUPPLY_CURRENT_QNOVO=*)
+			#-22
+		;;
+		POWER_SUPPLY_CONSTANT_CHARGE_CURRENT_MAX=*)
+			#3000000
+		;;
+		POWER_SUPPLY_TEMP=*)
+			#269
+		;;
+		POWER_SUPPLY_TECHNOLOGY=*)
+			#Li-ion
+		;;
+		POWER_SUPPLY_STEP_CHARGING_ENABLED=*)
+			#0
+		;;
+		POWER_SUPPLY_SW_JEITA_ENABLED=*)
+			#0
+		;;
+		POWER_SUPPLY_CHARGE_DONE=*)
+			#0
+		;;
+		POWER_SUPPLY_PARALLEL_DISABLE=*)
+			#0
+		;;
+		POWER_SUPPLY_SET_SHIP_MODE=*)
+			#0
+		;;
+		POWER_SUPPLY_DIE_HEALTH=*)
+			#Hot
+		;;
+		POWER_SUPPLY_RERUN_AICL=*)
+			#0
+		;;
+		POWER_SUPPLY_DP_DM=*)
+			#0
+		;;
+		POWER_SUPPLY_CHARGE_COUNTER=*)
+			#1066943
+		;;
+		POWER_SUPPLY_FCC_STEPPER_ENABLE=*)
+			#0
+		;;
+		POWER_SUPPLY_CHARGE_FULL=*)
+			#2878000
+		;;
+		POWER_SUPPLY_CYCLE_COUNT=*)
+			#8
+		;;
+	esac
+done
+} < /sys/class/power_supply/battery/uevent
+
+. /sys/class/power_supply/battery/uevent || exit
+
+case $POWER_SUPPLY_NAME in
+	[Bb][Aa][Tt][Tt][Ee][Rr][Yy]) unset POWER_SUPPLY_NAME ;; # useless name
+esac
+
+
+printf %s \
+"${POWER_SUPPLY_NAME+"battery name: $POWER_SUPPLY_NAME"
+}$(( POWER_SUPPLY_CURRENT_NOW / -1000 )) aA
+
+Status: ${POWER_SUPPLY_STATUS-null}
+# Plugged: ???
+Level: ${POWER_SUPPLY_CAPACITY-null}${POWER_SUPPLY_CAPACITY+%}
+Health: ${POWER_SUPPLY_HEALTH-null} 
+Ttechnology: ${POWER_SUPPLY_TECHNOLOGY-null}
+Max. Capacity: ???
+Temperature: ${POWER_SUPPLY_TEMP%?}.${POWER_SUPPLY_TEMP#"${POWER_SUPPLY_TEMP%?}"}
+---
+ Voltage: ???
+ Mainfacturer: ???
+ Model: ???
+ Android v: ???
+ build ID: ???
+"
+

@@ -1,0 +1,6 @@
+#!bin/sh
+
+[]
+
+dumpsys window visible | grep -E '^ *mSurface' | sed  -nEe 's/.*\(name=(.*)\).*/\1/p'
+dumpsys window visible | sed -nEe 's/^\s*mSurface=Surface\(name=([a-z][a-zA-Z0-9.\/]*)\).*/\1/p'

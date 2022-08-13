@@ -1,0 +1,7 @@
+#!/bin/sh
+# ref: https://stackoverflow.com/questions/4923550/how-to-make-a-call-via-pc-by-adb-command-on-android#41461464
+set -eu
+
+i=$( termux-contact-list | jq '.[]|(.name + ": " + .number )' --raw-output | fzf --no-sort | sed 's/^[^:]*://' )
+termux-app-launcher--termux
+termux--call-tel "$i"

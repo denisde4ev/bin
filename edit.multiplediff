@@ -9,7 +9,7 @@ esac
 
 
 printf %s\\n >&2 \
-	"WARNING: this script is not working"
+	"WARNING: this script is not working" \
 	"the script is not updating the line numbers" \
 	"and patch asks for file name to patch" \
 	"" \

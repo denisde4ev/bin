@@ -38,6 +38,15 @@ grep -vFx \
 -e .bin \
 -e  bin \
 \
+\
+-e .suroot \
+-e .termux \
+-e , \
+\
+\
+-e 1875-smstext-STOP.sh \
+-e BB \
+\
 | \
 case $1 in
 	rm)   shift; xargs -o -d \\n -r --   rm -rvi "$@" --;;

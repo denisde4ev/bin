@@ -1,0 +1,46 @@
+#!/bin/sh
+case $1 in -x) set -x; esac
+
+parse_arg() {
+	case $1 in -x) set -x; shift; esac
+
+	case $1 in
+		[0-9]*) vol=$(( $1 - 1 )); shift;;
+		*) unset vol;;
+	esac
+}
+
+main() {
+	parse_arg
+
+#traps='3 15 2 EXIT'
+#false && for i in $traps; do
+#	trap "echo ---- exits $i ----; trap - 3 15 2 EXIT; set -x; : termux-media-player stop" $i
+#done
+
+
+#for i in `seq 64`; do trap "echo trap $i" $i; done 
+
+
+echo "sleeping, or kill me $$" >&2
+
+}
+
+as_root() {
+	parse_arg
+	media volume --set "${vol-25}"
+	sleep .1
+	media volume --adj raise
+	echo ---  su done  ---
+}
+
+case $USER in
+root|'') ;;
+	u=root
+	as_root "$@"
+	;;
+*)
+	u=u
+	# fix bug, su's stdin must be tty
+	sudo "$0" "$@" | main "";
+esac

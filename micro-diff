@@ -1,5 +1,5 @@
-#!/usr/bin/env ash
 #!/bin/bash
+#!/usr/bin/env ash
 set -eu
 
 o=${0##*/}

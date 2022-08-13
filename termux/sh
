@@ -1,0 +1,3 @@
+#!/bin/bash
+echo SHHHHHHHHHHHHHHH, but bash
+~/.bin-personal/arg "$@"

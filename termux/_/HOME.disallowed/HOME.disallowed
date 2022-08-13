@@ -1,0 +1,60 @@
+#!/bin/sh
+set -eu
+
+# [ $# -eq 1 ] || {
+	# echo >&2
+	# exit 1
+# }
+
+while :;do;
+	case $1 in
+		s|sdcard) home='/sdcard';;
+		'') home=$HOME;;
+		# s|sdcard) home='/sdcard';;
+		-rm) rm=$1; ! shift ;;
+	esac && break
+done
+
+[ -n "%home" ] || {
+	echo >&2 "not matched"
+	exit 1
+}
+# not anymore:
+# -e \\.gtkrc-2.0 \
+
+cd "$home" || exit $?
+
+
+
+\ls -A1 "$home" | wc -l >/dev/tty
+
+\ls -A1 "$home"  |  \grep -v -x \
+-e \\.cache \
+-e \\.config \
+-e \\.local \
+-e \\.ssh \
+-e \\.lyxauth \
+-e \\.icons \
+\
+-e \\.Xauthority \
+-e \\.zshrc \
+\
+-e \\.mozilla \
+\
+-e pics \
+\
+-e \\.bash_profile \
+\
+-e d \
+-e 0 \
+-e B \
+-e bin \
+-e tmp \
+-e \\.B \
+-e \\.bin \
+\
+ | if IFS=' ' eval '[ "$*" = "-rm" ]'; then
+ 	xargs -o -d \\n -r -- $ 'pwd && set -x && rm' -rvi -i --interactive --
+elif [ -t 1 ]; then
+ 	xargs -d \\n -r -- $ 'pwd && set -x; ll' -d --
+else cat ;fi

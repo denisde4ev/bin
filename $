@@ -1,3 +1,29 @@
+#!/bin/bash -l
+PS1=''
+PS2=''
+
+case $1 in
+	*[!" ${TAB_CHAR}${NEW_LINE}${IFS}"]*) ;;
+	*) exit 126;;
+esac
+
+eval "shift || exit; $1 ${2+"\"\$@\""}"
+
+exit # `exit` to prevent 1 empty new line by dash in interactive mode
+
+
+
+
+
+
+
+
+
+
+
+
+exit 
+##
 #!/bin/sh -li
 PS1=''
 PS2=''

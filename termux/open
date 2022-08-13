@@ -1,0 +1,77 @@
+#!/bin/sh
+set -eu
+
+set -x 
+echo 1
+
+# case $1 in
+	# -s) shift; exec dolphin --new-window --select "$@";;
+# esac
+
+case $@ in
+	-) exec xargs open;;
+esac
+
+case ${SSH_TTY:+x} in x)
+	if termux--unlock-screen; then # screen have been ulnocked
+		echo Please unlock the screen and press enter
+		head -1 < /dev/tty
+	fi
+
+	termux-app-launcher--termux
+	sleep 1.5 # wait for Android to open the app
+	
+	# while :; do # todo: test if Termux is the opend app
+		# echo Please open the Termux app. and press enter
+		# head -1
+	# done
+
+esac
+
+if [ -x "$(type -p su)" ]; then
+	hasroot='';
+else
+	unset hasroot
+fi
+
+for i; do
+	case $i in
+	https://[a-zA-Z]*|http://[a-zA-Z]*) termux-open-url "$i";;
+	*)
+		if [ -f "$i" ]; then
+			exec termux-open "$i"
+			exit
+		fi
+
+		case $i in # convent to absolute path
+			/*) ;;
+			*) i="$PWD/${i#"./"}";;
+		esac
+
+		needs_root='' # assuming needs root by def.
+		case $i in
+		'') echo empty...;;
+		${hasroot+"$HOME"}|${hasroot+"$HOME"/*}) # expected to be "/data/data/com.termux/files/home"
+			###i='content://com.termux.documents/tree/%2Fdata%2Fdata%2Fcom.termux%2Ffiles%2Fhome/document/'$(
+			###	node -e 'console.log(encodeURIComponent(process.argv[1]))' -- "$i"
+			###)
+			i=root://$i
+			# NOTE: using mine prefferred file manager "Ghost Commander" 
+			exec am start --user 0 -n com.ghostsq.commander/.FileCommander -t inode/directory "$i"
+			# "Ghost Commander" is the only app that I know it supports opening Termux
+		;;
+		/sdcard|/sdcard/*|/storage/emulated/0|/storage/emulated/0/*)
+			unset needs_root
+			# NOTE: using mine another prefferred file manager "Solide explorer" (CURRENTLY NOT WORKING) 
+			###exec am start --user 0 -n pl.solidexplorer2/pl.solidexplorer.SolidExplorer ##### -t inode/directory "$i"
+			# NOTE: using mine another prefferred file manager "MX Explorer" (CURRENTLY NOT WORKING)
+			i=file:$i
+			exec am start --user 0 -n com.ghostsq.commander/.FileCommander -t inode/directory "$i"
+			;;
+		*) i=file:$i
+		esac
+		termux-open-url "$i"
+
+		;;
+	esac
+done

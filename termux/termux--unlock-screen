@@ -1,0 +1,20 @@
+#!/bin/sh
+# ref: https://stackoverflow.com/a/28188451/10823470
+set -eu
+
+
+case ${USER:-} in
+	root|0|'') ;;
+	###*) exec sudo "$0" "$@"; exit;;
+	*) exec su </dev/null -c "$0 $@"; exit;; # todo: fix the sudo
+esac
+
+case $(dumpsys power | grep 'Display Power') in
+	*' state=ON') exit 1;; # there is no need to unlock
+	*' state=OFF') ;;
+	*)
+		printf %s\\n "${0##*/}: Cant parse if sreen is on, assuming it's OFF" >&2
+	;;
+esac
+
+input keyevent 26

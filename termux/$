@@ -1,0 +1,14 @@
+#!/bin/bash -i
+# f=/tmp/eval.cache_$(tr / @<<<$*);
+# [[ ! -r $f ]] && {
+	cmd=$1
+	shift
+	# eval -- "$cmd" "${*@Q}" 1>"$f" 2>"$f.2"
+	# declare -p
+	# echo -------------------
+	
+	eval -- "$cmd" '"$@"'
+	#1>"$f" 2>"$f.2"
+# }
+# cat "$f"
+# cat "$f.2" 1>&2

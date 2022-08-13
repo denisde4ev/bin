@@ -1,0 +1,9 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# test- ()
+# {
+    [[ $* != *%* ]] && set -- "$@" "%";
+    while read line; do
+        test "${@//%/$line}" && echo "$line";
+    done;
+    :
+# }
