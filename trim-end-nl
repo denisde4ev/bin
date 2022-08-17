@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# this script trims only 1 new line from the end.
+# this is not exactly the same shell's trimming,
+# sh in `echo $(echo 1; echo;)` will trim  all end spaces.
+
+read -r i || { printf %s "$i"; return; }
+printf %s "$i"
+
+while :; do
+	if IFS='' read -r i; then
+		printf \\n%s "$i"
+	else
+		case $i in ?*)
+			printf \\n%s "$i"
+		esac
+		break
+	fi
+done

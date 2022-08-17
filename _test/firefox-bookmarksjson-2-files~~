@@ -1,0 +1,33 @@
+#!/bin/sh
+
+case $1 in
+--help)
+	printf %s\\n "Usage: ${0##*/} x|c [-f FILE]"
+	exit
+	;;
+[!-]*)
+	set -- -"$@"
+	;;
+esac
+
+unset opt_x opt_c opt_f opt_f_val
+OPTIND=0
+while getopts xcf: i; do
+	case $i in
+		x) opt_x='';;
+		c) opt_c='';;
+		f) opt_f=''; opt_f_val=$OPTARG;;
+		?) exit;;
+	esac
+done
+shift "$(( OPTIND - 1 ))"
+
+
+main() {
+	;
+}
+
+case ${opt_f_val-"-"} in
+	-) main;;
+	*) main < "$opt_f_val";;
+esac
