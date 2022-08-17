@@ -1,4 +1,4 @@
-#!/usr/bin/env _fzf_-f
+#!/bin/sh-c fzf<
 ## Portuguese
 🤣 Smileys & Emotion
 🤷 People & Body
