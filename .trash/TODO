@@ -1,0 +1,15 @@
+#!/bin/sh
+
+err()  { local i;i=$1; shift; printf >&2 $'\e[1;31mERROR:\e[m %s\n'    "$@"; (exit "${i:-1}"); }
+TODO() {                      printf >&2 $'\e[1;33mTODO:\e[m %s\n'     "$@"; (exit 7); }
+warn() {                      printf >&2 $'\e[1;36mWARNING:\e[m %s\n'  "$@"; }
+info() {                      printf >&2 $'\e[1;34mINFO:\e[m %s\n'     "$@"; }
+
+case ${0##*/} in
+	err)  err  "$@";;
+	TODO) TODO "$@";;
+	warn) warn "$@";;
+	info) info "$@";;
+esac
+
+# SOURCE: my /home/arcowo/.bin-personal/mv++ :OR: https://github.com/deni2020/mvpp/blob/master/mv%2B%2B

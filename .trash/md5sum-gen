@@ -1,0 +1,88 @@
+#!/bin/sh
+
+# unset IFS
+set -ue # unbind-var, exit-onerr
+
+cmd=
+ext=
+
+case ${0##*/} in
+	md5sum-gen) cmd=md5sum; ext=md5;;
+	sha2-gen|sha256sum-gen) cmd=sha256sum; ext=sha2;;
+esac
+
+# TODO: -o -f --force --overwrite -> answert yes to overwritf
+# TODO: --sumsum -> answert yes to overwritf
+
+overwrite=
+sumsum=
+
+
+
+# TODO FIX ME '\|/'
+echo todo FIX ME >&2
+exit 123
+
+
+
+
+while [ "$#" -ne 0 ]; do
+	case $1 in
+		--overwrite) overwrite=y;;
+		--no-overwrite) overwrite=n;;
+		--no-sumsum) sumsum=n;;
+		--sumsum) sumsum=y;;
+		--) shift; break;;
+		-*) echo >&2 "${0##*/}: unrecognized option '$1'"; exit 2;;
+		*) break;;
+	esac
+	shift
+done
+
+[ -n "$ext" ] && [ -n "$cmd" ] || {
+	echo >&2 'Error: format is not supported'
+	exit 1
+}
+
+ask() { # (prompt)
+	printf >&2 %s "$1"
+	local i;i=no
+	read i
+	case $i in
+		[Yy]*) ;;
+		*) return 1;;
+	esac
+}
+
+
+
+n=1 # at least one?
+for f; do
+
+	! [ -e "$f" ] && { echo >&2 "File '$f' is missing."; continue; }
+
+	case $f in *."$ext")
+		case $sumsum in
+			y) ;;
+			n) echo >&2 "File '$f' skiped."; continue;;
+			*) ask "Confirm for file '$f' " || continue;;
+		esac
+	;;esac
+
+	[ -e "$f.$ext" ] && {
+		case $overwrite in
+			y) ;;
+			n) echo >&2 "File '$f' skiped."; continue;;
+			*) ask "Overwrite '$f.$ext\` already existing file " || continue;;
+		esac
+	}
+
+
+	sum=$( "$cmd" -- "$f" ) && {
+		echo "$sum"
+		echo "$sum" > "$f.$ext" && n=0 # also if this line fails, runs bottom cmd 'Something ...'
+	} || echo >&2 "Something went wrong with '$i\` or .$ext file"
+
+done
+
+exit $n

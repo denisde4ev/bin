@@ -1,0 +1,162 @@
+#!/bin/bash
+
+
+# REWRITE ME!
+# My own legacy script! I dont remeber this. Shoul be rewritten
+# 
+
+
+
+# TODO: ONE DAY IN sh ad no long arguments (not supportes in busybox)
+#!/bin/sh
+
+
+set -eu
+
+
+
+err() {
+	printf %s\\n "${0##*/}: $1"
+	# (exit "$2") || exit
+	[ "${2:-}" -eq  0 ] || exit "$2"
+}
+
+false && (
+target=''
+ttarget=''
+
+rm_args=$#
+j='' # action
+for i; do
+	case $j in
+		end) set -- "$@" "$ttarget"; ttarget=$i; continue;;
+		-t) target=$i;;
+		
+	esac
+	j=
+		
+
+	case $i in
+		--) end=1;;
+
+		--interactive) interactive=-i;;
+		--verbose) verbose=-v;;
+		--*|'') echo "mv++: invalud arg '$i'" >&2; exit 2;;
+		-T) err 'cannot combine --target-directory (-t) and --no-target-directory (-T)' 4;;
+
+		-*[!ivIVht\?]*) err "mv++: invalud option '$i'" 3;;
+		-*)
+			# aruments requireing argument:
+			########################################################### #            case $i in -*t*) a=; eAac #TODO: CONTINUE HIRE
+
+			# /|\
+			#TODO: CONTINUE HIRE
+			#TODO: CONTINUE HIRE
+			
+
+			
+			case $i in -*i*) interactive=-i; esac
+			case $i in -*v*) verbose=-v; esac
+			case $i in -*I*) interactive=; esac
+			case $i in -*V*) verbose=; esac
+
+			case $i in -*[h\?]*) usage 0; esac
+		;;
+		*) set -- "$@" "$ttarget"; ttarget=$i;;
+	esac
+done
+shift "$rm_args"
+
+case $j in
+	-t) err "option requires an argument -- '$j'";;
+esac
+
+[ "$target" != '' ] || target=$ttarget
+
+if [ "$1" = '' ]; then
+	shift
+else
+	err "${0##*/}: aruments parseing error" 50
+fi
+
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+s=${@:$#-1:1} # SOURCE
+t=${@:$#} # TARGET
+set -- "${@:1:$#-2}"
+
+[ "$s" != '' ] && [ "$t" != '' ] || {
+	printf %s\\n \
+	"Usage: ${0##*/} [-r] [OPTION]... <SOURCE> <TARGET>" \
+	'  Moves file and creates Symbolic link in old location' \
+	'  -r option is only for ln' \
+	'  all other arguments are shared'
+
+	[ $# = 0 ]
+	exit
+}
+
+r=
+[ "${1:-}" = -r ] && r=-r && shift
+[ "${2:-}" = -r ] && r=-r && set -- "$1" "${@:3}" # because my alias, take the $2 argument
+
+[ -d "$t" ] && t+=/
+# case $t in */..|*/.|..|.) t+=/; esac
+[[ $t = */ ]] && t+=${s##*/}
+
+err(){ echo >&2 "$1"; exit "${2:-1}"; }
+[[   -e "$s" ||   -L "$s" ]] || err "Source does not exist - $s"
+[[ ! -e "$t" && ! -L "$t" ]] || err "Target already exist - $t"
+
+cmd() { echo $ "${@@Q}"; "$@" || { q=$?; echo "${1%% *} exit code $q"; return $q; }; } # log the commands
+cmd mv       "$@" "$s" "$t"
+cmd ln -s $r "$@" "$t" "$s"
+
+
+# (
+# 	while [ 2 -lt $# ]
+# 	do
+# 		case $1 in
+# 			-*) shift;; # remove all arguments
+# 			*) break;;
+# 		esac
+# 	done
+# 	[ $# -eq 2 ] # expect to have <SOURCE> <TARGET>
+# )
+
+ 
+# v=
+# i=
+# 
+# case $1 in
+# 	--*);;
+# 	-*v*) v=v
+# esac
+# 
+# case $1 in
+# 	--*);;
+# 	-*i*) i=i
+# esac
+# 
+# case $1 in
+# 	--*|[!-]*|-*[!vi]*) (exit 1);;
+# 	-*r*) r=r;;
+# 	*) [ "$2" = '-r' ] && r=r
+# esac && shift 1
+# 
+# 
+# mv ${v:+"-$v"} ${i:+"-$i"} "$@" || echo mv exit code $?
+# ln ${v:+"-$v"} ${i:+"-$i"} -s ${r:+"-$r"} "$@"

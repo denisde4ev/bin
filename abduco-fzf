@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+i=$(abduco -l | grep -v '^Active session' | fzf +s --tac)
+exec $ exec abduco -A "${i##*["$IFS"]}"  # run with '$' in order to get aliased version

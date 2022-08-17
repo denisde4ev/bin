@@ -1,0 +1,37 @@
+#!/bin/bash
+
+(( $# )) && echo arguments are ignored
+echo 'Useage: variety -<input>
+  --* -> read more than 1 char
+  -q  -> --quit  (Also quits from ^D)
+  -n  -> --next
+  -p  -> --previous
+  -t  -> --trash
+  -f  -> --favorite
+'
+# trap KILL?  'variety -q'   ?todo?
+D=$'\4' # end of input ( Ctrl+D = ^D )
+e(){ printf "\\E[10Cvariety err code: $?\\E[28D\\E[${#?}D"; }
+v() { eval "variety ${2:+&>/dev/null} -$1 || e ${2:+&}"; echo; }
+a() { printf %s\\r "variety -$1          ";v $1 1; }
+{ pidof variety || v -pause; } & # in case if is not running
+
+while IFS= read -p 'variety -' -n 1 i; do  case $i in
+	[nptf]) v "$i" 1;;
+	-|["\'\""]) read j || break; v "$i$j";;
+	q|"$D") echo; break;;
+
+	[$'\E\t ']|'')
+		read -t 0.001 -s -p $'\r                  \r' -s j;
+		case ${j#\[} in
+			"") break;; # Enter
+			B|3~) a t;; # ↓|Delete
+			A)    a f;; # ↑
+			C)    a n;; # →
+			D)    a p;; # ←
+		esac
+	;;
+	*) printf '\n  invalid option: %s' "${i@Q}";;
+esac;  done
+
+variety --quit &>/dev/null

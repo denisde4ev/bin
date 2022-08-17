@@ -1,4 +1,12 @@
 #!/bin/bash
+
+# 
+# TODO: This should be rewritten
+# 1. basename- coud be simplifyed to `sed 's@.*/@@'` and add support to pass --null-data arg
+# 
+# My own legacy file! I dont even remember what I was thinking when I was codding this and it's unmantainable. But it still works.
+# ->  alias '[[[' ']]]' ..... JUST NOO!
+
 [ "$PS4" = "+ " ] && PS4='#$? '
 o=${0##*\/}  # dirname of $0
 o=${o%-}     # remove '-' end

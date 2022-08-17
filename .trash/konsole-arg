@@ -1,0 +1,3 @@
+#!/bin/bash
+
+"$( type -p konsole || echo /usr/bin/konsole )" -e /bin/sh -c "arg \"\$@\"; echo >&2 Press Enter...; head -1 &>/dev/null" -s "$@"

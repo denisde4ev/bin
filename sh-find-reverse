@@ -24,6 +24,6 @@ while
 		YN_confirm -S y continue
 	}
 do
-	i=$i/*
+	i=../$i
 	printf %s\\n "pattern: $i/$*" >&2 
 done

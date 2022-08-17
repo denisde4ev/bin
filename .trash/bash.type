@@ -1,0 +1,4 @@
+#!/bin/bash
+
+. /home/arcowo/.bashrc.d/%type.bash
+type "$@"

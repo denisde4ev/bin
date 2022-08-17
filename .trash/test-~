@@ -1,0 +1,85 @@
+#!/bin/bash
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TODO copy from nvme0n1p10
+
+
+
+
+
+
+
+
+
+PS4='#$? '
+o=${0##*\/}  # dirname of $0
+o=${o%-}
+o=${o:-test} # if cant get it, fallback to test
+
+z= # use null character for IO
+nl='
+' # just a new line
+
+command -v shopt >/dev/null && shopt -s expand_aliases # expand aliases
+alias '[[=case' ']]=:;;*)false;esac'
+
+# [[ $o in (Z*) ]] && { z=zz; o=${o#Z}; }
+case $o in
+	Zin-*) z=i; o=${o#Zin-};;
+	Zout-*) z=o; o=${o#Zout-};;
+	Zio-*) z=io; o=${o#Zio-};;
+	ZZ-*) z=io; o=${o#ZZ-};;
+	Z*) z=io; o=${o#Z};;
+esac
+
+[[ $@ in (*%*) ]] || {
+	if [[ $o in (test) ]] || (while [ 0 -lt $# ];do [ "x--" = "x$1" ]&&exit 0;shift;done;exit 1)
+	then set -- "$@" %
+	else set -- "$@" -- %;
+	fi
+}
+
+[ -n "$z" -a -z "$BASH" ] && {
+	echoerr "WARING null io is only supported for bash"
+}
+
+
+
+case $z in
+	io) read_d=; format='%s\0';;
+	i) read_d=; format='%s\n';;
+	o) read_d=$nl; format='%s\0';;
+	*) read_d=$nl; format='%s\n';;
+esac
+
+[[ $o in (test) ]] || format=
+
+# arg "$o" "$@"
+while IFS='' read -r -d "$read_d" line
+do "$o" "${@//%/$line}" && printf "$format" "$line"
+done
+
+exit 0 # TODO: implement if 1 time matches return 0 else 1 ?
+#########################################################################################################################
+#                                                                                                                       #
+#  $o is command to be executed and is get by substing by $0                                                            #
+#  if $0 ends with '-' then it is removed from end once                                                                 #
+#  if $o starts with 'Z' then null character imput/output is used (only supports bash)                                  #
+#  if argumend does not contain %, then '%' is added at end                                                             #
+#     exept when $o is not 'test' then '--' ( if doesn't already exist ) AND '%' are added as 2 arguments at end        #
+#                                                                                                                       #
+#########################################################################################################################

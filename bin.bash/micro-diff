@@ -1,8 +1,7 @@
 #!/bin/bash
-#!/bin/ash
 set -eu
 
-# when edit this file conider editing ./bin.bash/micro-diff as well
+# when edit this file conider editing ../micro-diff as well
 
 micro_conf_bac=~/.config/micro/backups
 
@@ -16,25 +15,25 @@ esac
 
 err() { printf %s\\n >&2 "${0##*/}: $1"; exit $2; }
 
-case $# in
-	1) i=$1; shift;;
-	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
-	# consider adding more...: (:/) when run `micro-diff -U 10 --color file` $# = 4 and tish one is frequently used by me
-	*) unset i; . ~/B/__sourceable/pop_to_i.sh || echo $?;;
-
-
+case $# in 0) ;; *)
+	# pop last arg to var `i`
+	# this is from https://github.com/denisde4ev/shrc/blob/master/__sourceable/pop_to_i.bash
+	# (for POSIX sh pop_to_i.sh)
+	i=$#
+	i=${!i}
+	set -- "${@:1:$#-1}"
 esac
 
 
-
+shopt -s nullglob
 
 case ${i+i}:${i-} in
 :|i:-*)  # if no arguments or if last arg is armument (woraround for this check is ./-file)
-	ll_or_print=$micro_conf_bac
-	. ~/B/__sourceable/ll_or_print.sh
-
-
-
+	if [ -t 1 ]; then
+		ls -al "$micro_conf_bac"/*
+	else
+		printf %s\\n "$micro_conf_bac"/*
+	fi
 	exit
 	;;
 esac

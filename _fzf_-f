@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# REWRITE ME!
+
+case $1 in /* | ./*) set -- "" "$@"; esac
+
+set -f
+IFS=$'\t'
+{ shift; grep -ve '^#' -ve '^$' "$@"; } | tail -n +2 | fzf $1

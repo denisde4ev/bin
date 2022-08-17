@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+case $1 in --help) printf %s\\n \
+	"Usage: ${0##&/} [SOURCE] [TAGET]" \
+	"removes files from TARGET dir," \
+	"that exists and are same as in SOURCE" \
+	" ( diff 's/1' 't/1' && rm 't1' ) " \
+; exit
+esac
+
+case $# in 2) ;; *)
+	printf %s\\n >&2 \
+		"please specify ony 2 arguments, see --help." \
+	;
+	exit
+esac
+
+
+find "$1" -type f | {
+
+	IFS=''
+	while read -r i; do
+		j=${i#"$1"}
+		case $i in
+			'') printf %s\\n "got empty file when i='$i'";;
+			"$j")
+				printf %s\\n >&2 \
+					"file '$i' does no seems to be in source folder '$1'" \
+				;
+				exit 1;;
+		esac
+		diff -q -- "$1/$j" "$2/$j" && \
+		rm -vi -- "$2/$j" < /dev/tty
+	done
+
+}
