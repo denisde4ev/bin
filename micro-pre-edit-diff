@@ -34,7 +34,7 @@ case $# in 1) # can handle only one arg/file (and there is no point for parsing 
 			;;
 			1) # differ files. do not edit, just exit
 				printf %s\\n >&2 "files differ, wont run micro"
-				exit
+				exit 1
 			;;
 			*) printf %s\\n >&2 "note: unexpected diff exit code: \$?=$?"; exit 3;;
 		esac
