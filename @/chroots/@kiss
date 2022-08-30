@@ -35,6 +35,7 @@ case ${SUDO_USER+x} in x) SUDO_USER=root; esac
 
 cd "$new_root"
 
+#set -x
 
 if [ "$(id -u)" -eq 0 ]; then
 	# Todo: add manjaro command for chroot
@@ -63,6 +64,7 @@ else
 		-b /dev \
 		-b /proc \
 		-b /sys \
+		-b /^ \
 		-w / \
 		-r . \
 		\
