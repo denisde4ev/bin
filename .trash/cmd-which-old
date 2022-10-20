@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# cmd_which() {  # cmd_which(callback='printf %s\')
+
+set -feu # Disable file name generation (globbing).
+# [[ $1 = ---cmd?(=*) ]] ||
+usage() {
+	echoerr "Usage: ${0##*/} ---cmd=<command> [arguments for with] [--] <commands>"
+	[[ $1 = --help ]]
+	exit "$?"
+}
+# local cmd
+cmd=
+
+case $1 in
+	--cmd) shift; cmd=$1;;
+	--cmd=*) cmd=${1#--cmd=};;
+	---cmd=*) cmd=${1#---cmd=};;
+	-*) cmd=${1#-}; type "$cmd" &>/dev/null || usage "$1";;
+	*) usage "$1";;
+esac
+shift
+
+# local l=()
+# local a=()
+a=()
+while [[ "$#" -ne 0 ]]; do
+	case $1 in
+		(-[!-]) a+=( "$1" );;
+		(--) shift; break;;
+		(*) break;;
+		# *)l+=($1);;
+	esac
+	shift
+done
+
+# local w=()
+w=()
+# set | grep -Ee '^(a|v|l)='
+# arg "${l[@]}" "$@"
+for i; do
+	w+=( "$(which "${a[@]}" -- "$i" 2>/dev/null || printf %s "$i")" )
+done
+
+if (( ${#w[*]} )); then # if has length
+	$cmd "${w[@]}"
+else
+	echo >&2 "Nothing found"
+	exit 127
+fi
+#}
+#
+#case ${0##*/} in
+#	# 1cmd-which) ${1#-C=}
+#	cmd[-_]which) cmd_which "$@";;
+#	# Zin-cmd-which|Zcmd-which) cmd_which -Z - "$@";;
+#	*)false
+#esac

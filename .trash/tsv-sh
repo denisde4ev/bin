@@ -1,0 +1,92 @@
+#!/bin/sh
+# only supports '<key>	<value>' TSV files!
+set -eu
+
+err() {
+	printf %s\\n >&2 "${0##*/}: $1"
+	exit "${2-1}"
+}
+# err "script NOT DONE"
+
+
+tab='	'
+new_line='
+'
+
+unset files
+no_header=0
+while case $# in 0) false; esac; do
+	case $1 in
+	[!-]*) break;;
+	--help)
+		printf %s\\n >&2 \
+			"Usage: ${0##*/} [--no-header|-H] <-f files> <CRUD> 'key' [value]" \
+			"  -H|--no-header    first line is not header" \
+			"  -f|--files <files>  tab separated files to operate" \
+			"" \
+			"  C|create     <key> [value]" \
+			"  create_many  <key> <value> [...<key> <value>]" \
+			"  R|read       <key>" \
+			"  U|update     <key> [value]" \
+			"  D|delete     <key>  (note: does not remove the line, just makes it empty)" \
+		;
+		[ $# -eq 1 ]; exit
+	;;
+	--files) files=${2?"option '$1' requires an argument"};;
+	--) shift; break;;
+	-[!-])
+		OPTIND=1; while getopts Hhf: i; do
+			case $i in
+				H) no_header=1;;
+				h) set -- --help; continue 2;;
+				f) files=${OPTARG?};;
+				*) exit 2;;
+			esac
+		done
+		shift $(( OPTIND - 2 ))
+		case $1 in --) break; esac
+	;;
+	*) printf %s\\ "$o: unrecognised option '$1'"; exit 2;;
+	esac
+	shift
+done
+
+case $1 in 
+case $# in 0|1) err "use --help for usage"; esac
+
+
+case ${files+1}:$files in 1:-|0:)
+	err 'no files specified, use --help for usage|| from stdin not implemented'
+esac
+
+#files is tabs
+#reate many
+
+c=0
+r=0
+u=0
+d=0
+case $1 in
+	C|create)    c=1;;
+	create_many) c=2;;
+	R|read)      r=1;;
+	U|update)    u=1;;
+	D|delete)    d=1;;
+	*) err "no CRUD operation specifyed";;
+esac
+
+echo unimplemented # TODOOO here!
+exit 100
+IFS=$tab
+
+key=${1%%["$tab$new_line"]*}
+
+while read -r file
+	while read -r current_key _; do
+
+# @s\		case $1 in U|update)
+
+	done <> "$file"
+done << EOF
+$files
+EOF

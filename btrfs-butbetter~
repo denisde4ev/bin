@@ -1,0 +1,58 @@
+#!bin/sh
+case $1 in -x) set -x; esac
+set -eu
+
+#case $1 in --help)
+case --help in "$1"|"$2") # reason: `-x --help` wont work
+printf %s\\n \
+	"Usage: ${0##*/} <new|mk|stat|rm|set-ro|unset-ro|get-ro> <SUBVOL>..." \
+	"       ${0##*/} <snap|mv> <SOURCE> <TARGET>" \
+	"" \
+	"  new|mk    -> sudo btrfs subvolume create" \
+	"  stat      -> sudo btrfs subvolume show" \
+	"  rm        -> sudo btrfs subvolume delete" \
+	"  set-ro    -> sudo btrfs property set % ro true" \
+	"  unset-ro  -> sudo btrfs property set % ro false" \
+	"  get-ro    -> btrfs property get % ro" \
+	"" \
+	"  snap      -> sudo btrfs subvolume snapshot" \
+	"  mv        -> sudo mv <SOURCE> <TARGET>" \
+;
+exit
+esac
+
+[ ! -t 1 ] && printf %s\\n >&2 "warning: do not use in scripts"
+
+
+case $1 in -x) ;; *)
+	# TODO:! NEVER EVER FULLY TESTED
+	echo >&2  TODO: ! this script seems done but NEVER EVER FULLY TESTED !
+	echo >&2  provide -x as first arg to debug
+	exit 123
+esac
+
+
+case $1 in get-ro) ;; *) case $USER in root) ;; *)
+	USER=root exec sudo "$0" "$@"
+	exit
+esac; esac
+
+case $1 in -x) shift; esac
+
+
+
+
+local _btr_action;_btr_action=$1; shift
+case $_btr_action in
+	'') printf %s\\n >&2 "see --help for usage"; return 2;;
+
+	new|mk)   for i; do btrfs subvolume create "$i"     ; done;;
+	stat)     for i; do btrfs subvolume show   "$i"     ; done;;
+	rm)       for i; do btrfs subvolume delete "$i"     ; done;;
+	set-ro)   for i; do btrfs property set "$i" ro true ; done;;
+	unset-ro) for i; do btrfs property set "$i" ro false; done;;
+	get-ro)   for i; do btrfs property get "$i" ro false; done;;
+
+	snap)     exec btrfs subvolume snapshot "$@";;
+	mv)       exec mv "$@";;
+esac

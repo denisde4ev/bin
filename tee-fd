@@ -1,0 +1,15 @@
+#!/bin/sh
+
+IFS=''
+
+set -eu
+
+while read -r line; do
+	printf %s\\n "$line" >&"$1" || :
+	printf %s\\n "$line" 
+done
+
+case $1 in ?*)
+	printf %s "$line" >&"$1" || :
+	printf %s "$line"
+esac

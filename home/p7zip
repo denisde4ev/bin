@@ -1,0 +1,3 @@
+#!/bin/sh -eu
+[ "$#" -eq 1 ] && [ -f "$1" ] && case $1 in /*);; [!-]*) set -- "$PWD/$@"; esac
+PATH=$(getconf PATH) HOME=${XDG_CACHE_HOME:?}/p7zip exec "${0##*/}" "$@"

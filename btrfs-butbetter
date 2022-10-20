@@ -1,0 +1,92 @@
+#!/bin/sh
+case $1 in -x) set -x; esac
+set -eu
+
+case $# in 0) printf %s\\n >&2 "see --help for usage"; exit 2; esac
+
+case ${1-} in --help)
+printf %s\\n \
+	"Usage: ${0##*/} <new|mk|stat|rm|set.*|unset.*|get.*> <SUBVOL>..." \
+	"       ${0##*/} <snap|mv> <SOURCE> <TARGET>" \
+	"       ${0##*/} <df|du> [arg]..." \
+	"" \
+	"  new|mk      -> \$0 add" \
+	"  rm          -> \$0 del" \
+	"  add         -> sudo btrfs subvolume create" \
+	"  stat        -> sudo btrfs subvolume show" \
+	"  del         -> sudo btrfs subvolume delete" \
+	"  set *=*     -> sudo btrfs property set % *1 *2" \
+	"  set *       -> sudo btrfs property set % *  true" \
+	"  get (*|all) -> btrfs property get % *" \
+	"  unset *     -> sudo btrfs property set % *  false" \
+	"" \
+	"  snap        -> sudo btrfs subvolume snapshot" \
+	"  mv          -> sudo mv <SOURCE> <TARGET>" \
+	"  df|du|sync  -> btrfs filesystem (df|du|sync)" \
+	"" \
+	"note: this script is not ment to eleminate need to call btrfs command," \
+	"but to bring most common usages of btrfs easyer and simpler to use" \
+	"from command line (not ment for scripts)" \
+;
+exit
+esac
+
+[ ! -t 1 -o ! -t 2 -o ! -t 0 ] && printf %s\\n >&2 "warning: do not use in scripts"
+
+
+case $1 in get.*|get|df|df|sync) ;; *) case $USER in root) ;; *)
+	USER=root exec sudo "$0" "$@"
+	exit
+esac; esac
+
+case $1 in -x) shift; esac
+
+
+# MAIN:
+
+action=$1; shift
+
+case $action in
+	add|new|mk|stat|del|rm|sync) case $# in 0)   false; esac;;
+	set|get|unset)               case $# in 0|1) false; esac;;
+	# mv|snapdf|du) ;; # not checed, just leave native error
+esac || {
+	printf %s\\n >&2 "too few arguments"
+	exit 2
+}
+
+
+case $action in
+	'') printf %s\\n >&2 "see --help for usage"; return 2;;
+
+	add|new|mk) set +e; for i; do btrfs subvolume create "$i"; echo \$\?: $?; done;;
+	stat)       set +e; for i; do btrfs subvolume show   "$i"; echo \$\?: $?; done;;
+	del|rm)     set +e; for i; do btrfs subvolume delete "$i"; echo \$\?: $?; done;;
+
+	set)
+		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
+		key=$1; shift
+		case $key in *=*) val=${key#*=}; key=${key%"=$val"};; *) val=true;; esac
+		set +e; for i; do btrfs property set "$i" "$key" "$val"; echo \$\?: $?; done
+	;;
+	get)
+		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
+		key=$1; shift
+		case $key in all) key=''; esac
+
+		# key might be empty str -> in that case do not send at all
+		set +e; for i; do btrfs property get "$i" ${key:+"$key"}; echo \$\?: $?; done
+	;;
+	unset)
+		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
+		key=$1; shift
+		set +e; for i; do btrfs property set "$i" "$key" false; echo \$\?: $?; done
+	;;
+
+	mv) exec mv "$@";;
+	snap) exec btrfs subvolume snapshot "$@";;
+	df|du|sync) set +e; for i; do btrfs filesystem "$action" "$i"; echo \$\?: $?; done;;
+	# TODO/consider: du and df to be more seemless as native the command
+ 
+	*) printf %s\\n "unrecognized: '$action', see --help for usage"; exit 2;;
+esac

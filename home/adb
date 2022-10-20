@@ -1,0 +1,2 @@
+#!/bin/sh -eu
+PATH=$(getconf PATH) HOME=${XDG_CACHE_HOME:?}/android-tools exec "${0##*/}" "$@"

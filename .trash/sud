@@ -1,15 +1,10 @@
 #!/bin/bash
 
-# exec sudo --login "$@"
-# exit 1
-
-# Waring: /bin/sudo might not be the path in avery distro
-
-
-case "$1" in
-	o) set -- "${@:2}";;
-	o*) set -- "${1#o}" "${@:2}";;
-	'') [ "$#" = 0 ] && exec /bin/sudo --login;;
+case $1 in
+	o)  set -- "${@:2}";; # sud o dd
+	o*) set -- "${1#o}" "${@:2}";;  # sud odd
+	'') [ $# = 0 ] && exec sudo --login;; # hope sudo is not symlink to doas or another wrapper/proxy
 esac
-echo /bin/sudo "$@" >&2
-exec /bin/sudo "$@"
+
+echo sudo "$@" >&2
+exec sudo "$@"

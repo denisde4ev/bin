@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cd ~ || exit
+
+#$ 'sudo true' # piping sudo to sudo might get error '[1]+ Stopped                 fix-homedir-Iown'
+
+sh$ 'sudo true; sudo find .[!.]* -uid 0 | sudo x Iown -v --'

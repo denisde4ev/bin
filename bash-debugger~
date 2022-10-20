@@ -1,0 +1,8 @@
+#!/bin/sh
+
+PS4='$(while [ "${debugger:-}" != "" ]; do read debugger;eval "${debugger:-"printf \"\\\\\\\\33[A\""}" >&2; done)'"$PS4" \
+exec $ "set-x $@"
+
+	# bash -ilxc \
+	# "$1" \
+

@@ -1,0 +1,74 @@
+#!/bin/sh
+case $1 in -x) set -x; shift; esac
+
+: "${B:=/^/ https://github.com/denisde4ev/shrc/tree/master/}"
+
+command -v cout >/dev/null || {
+	. "$B"/_core;   # require -f command. = $B/_core
+	. "$B"/clip-io; # require -f cout = $B/clip-io
+} || exit
+
+sleeptime=1
+endword=EOF
+unset ignore_first
+
+
+case $1 in --help)
+	printf %s\\n >&2 \
+		"Usage: ${0##*/} [-0|--noignore-first] [--EOF|--end ENDWORD] [-n|--sleeptime SLEEPTIME]" \
+	;
+	exit
+esac
+
+
+while case $# in 0) false; esac; do
+	case $1 in --*'='*) i=$1; shift; set -- "${i%%=*}" "${i#*=}" "$@"; esac
+	#unset i
+	case $1 in
+	--EOF|--end)
+		shift
+		endword=$1
+		;;
+	-0|--noignore-first)
+		ignore_first=''
+		;;
+
+	# ${1#*[!0-9.]*}) # if is number
+	-n|--sleeptime)
+		sleeptime=$1
+		shift
+		;;
+	-[!-]*)
+		printf %s\\n >&2 \
+			"wrong or unsuported arg: $1" \
+			"(note: opt format: '-0 -n 1' and may support '--end=EOF'. not '-0 -n1'/'-0n1')" \
+		;
+		exit 5
+		;;
+	*)
+		printf %s\\n >&2 "see --help for usage"
+		exit 2
+	esac
+	shift
+done
+
+printf %s\\n >&2 \
+	"${0##*/}: "'Will run `cout` and repeat after `sleep $sleeptime`.' \
+	"${0##*/}: "'Stops when `cout` outputs: '"$endword" \
+;
+
+last=${ignore_first-$(cout)}
+
+while
+	curr=$(cout) || { printf %s\\n >&2 "${0##*/}: cout exit status: $?"; exit 3; }
+do
+	case $last in "$curr") ;; *)
+		printf \\a >/dev/tty # prints Bell char
+		case $endword in "$curr") break; esac
+		printf %s\\n "$curr"
+		last=$curr
+	esac
+
+	sleep "$sleeptime"
+done
+printf \\a >/dev/tty # prints Bell char (2 times at same time will/might get ignored by DE / notification handler)

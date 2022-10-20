@@ -2,11 +2,7 @@
 PS1=''
 PS2=''
 
-case $1 in
-	*[!" ${TAB_CHAR}${NEW_LINE}${IFS}"]*) ;;
-	*) exit 126;;
-esac
+eval "${1+shift}
+$1 ${2+"\"\$@\""}"
 
-eval "shift || exit; $1 ${2+"\"\$@\""}"
-
-exit # `exit` to prevent 1 empty new line by dash in interactive mode
+exit # prevent 1 empty new line by dash in interactive mode

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# git fetch (neofetch like) script
+
+
+case $# in 0)
+	i=$(git rev-parse --show-toplevel) || exit # git will show sutabl error message before exit
+	set -- "$i"
+esac
+
+
+for i; do (
+	cd "${i%/.git}" || exit
+
+	# TODO:! add more from .git-status-all/.git-fetch-all from dotfiles repo (in some branch)
+	git status -s
+); done
+
+

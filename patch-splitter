@@ -2,7 +2,7 @@
 
 case $1 in
 	--help)
-		printf %s\\n "Usage: ${0##*/} <+|-> [sed args] [files]";
+		printf %s\\n "Usage: ${0##*/} <+|-> [sed args] [FILE]...";
 		exit
 	;;
 	+) shift; set -- -n -e "s/^[ +]//p" "$@";;

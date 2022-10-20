@@ -1,0 +1,156 @@
+#!/bin/sh
+
+: "${TRASH_EUID:=$(id -u)}" "${NEW_LINE:="
+"}"
+
+err() { printf %s\\n >&2 "${0##*/} $1"; }
+
+case $1 in
+--help)
+	printf %s\\n \
+		"Usage: ${0##*/} [--] <files ...>" \
+	;;
+'')
+	err "pleasa specify <files ...>, see--help"
+	exit
+esac
+
+
+get_mount_dir() {
+	stat -c %m "$1"
+}
+get_mountpart_dir() {
+	df -- "$1" | sed -ne '$ s/ .*//p'
+}
+
+home_mount=$(get_mount_dir ~)
+
+unset had_error
+for i; do
+	while :; do
+
+	file_mount=$(get_mount_dir "$1") || break
+
+	file_mountpart=$(get_mountpart_dir "$1")
+	case $file_mountpart in
+		/*) ;; 
+		*)
+			printf %s\\n >&2 \
+				"note: (file_mountpart='$file_mountpart') aperrs to be temporaly file location," \
+				"      falling back to (home_mount='$home_mount') partition" \
+			;
+			file_mount=$home_mount
+	esac
+	#unset file_mountpart
+
+	
+
+
+	case "$file_mount" in
+	"$home_mount")
+		trash_dir=${XDG_DATA_HOME:-"$HOME/.local/share"}/Trash
+		;;
+	*)
+		trash_dir=$file_mount/.Trash-"$TRASH_EUID"
+		;;
+	esac
+
+	[ -d "$trash_dir/files" ] || mkdir -pv "$trash_dir/files" || break
+	[ -d "$trash_dir/info"  ] || mkdir -pv "$trash_dir/info"  || break
+
+	case $1 in # TODO: escape path in share/info/t file
+	*["$NEW_LINE"%]*)
+		err "new lines/prosents in the filename (\$1='$1') are not allowed"
+		break
+		;;
+
+	*[!a-zA-Z0-9_./]*|'')
+		printf %s\\n >&2 \
+		"WARNING: \$1='$1' is in *[!a-zA-Z0-9_./]*|''," \
+		"paths are not escaped by this script" \
+		"this might result in error later on when restoring" \
+		;;
+	esac
+
+	trash_file=$trash_dir/files/${1##*/}
+	if [ -e "$trash_file" ]; then
+
+		{ # imitate `for: for(i=1;i<100;i++)` loop
+
+			i=1
+			#unset trash_file__
+
+		while :; do while :; do
+
+			trash_file__=$trash_file-$i
+			[ -e "$trash_file__" ] || {
+				if [ -e "$tarsh_info" ]; then
+					err "trash_file='$trash_file' does not exist but tarsh_info='$tarsh_info' does exist"
+					printf %s\\n >&2 "  \$ nl \$tarsh_info:"
+					nl "$tarsh_info"
+					if YN_confirm y "  do you want to romeve it? by answering 'no' will continue searching for next free index (current i=$i)"; then
+						rm -v "$tarsh_info"
+					else
+						break 1 # goto break 1 / ((continue for))
+					fi
+				fi
+				break 2 # goto break 2 / ((break for))
+			}
+			tarsh_info=$trash_dir/info/${trash_file##*/}
+
+
+		break; done # goto: break 1 / ((continue for))
+
+			i=$(( i + 1 )) # `for` increment
+
+			case $i in ??*) # `for` check
+				err "too many attempts to find trash location. reached (i=$i), for (trash_file='${trash_file}')"
+				break # goto break 2 / ((break for))
+			esac
+
+		done # goto: break 2 / ((break for))
+		}
+
+		#trash_file=${trash_file__:?}
+		#unset i
+		trash_file=$trash_file__
+	fi
+	# $trash_file must not exist here
+
+	case $1 in
+		/*) trashfile_fullpath=$1;;
+		*)
+				case $PWD in # TODO: escape path in share/info/t file
+				*["$NEW_LINE"%]*)
+					err "new lines/prosents in (\$PWD='$1') are not allowed"
+					break
+					;;
+
+				*[!a-zA-Z0-9_./]*|'')
+					printf %s\\n >&2 \
+					"WARNING: \$PWD='$PWD' is in *[!a-zA-Z0-9_./]*|''," \
+					"paths are not escaped by this script" \
+					"this might result in error later on when restoring" \
+					;;
+				esac
+			trashfile_fullpath=$PWD${1#./}
+		;;
+	esac
+
+  mv -vi -- "$1" "$trash_file" || break
+	cat <<- EOF > "$tarsh_info" || break # TODO:! HOW SHEULD BE THE FILEINFO STRUCTURE
+	[Trash Info]
+  Path=$trashfile_fullpath
+  DeletionDate=$(date +)
+	EOF
+	# TODO: check if date has to be in UTC ??
+
+
+	done
+	had_error=$?
+done
+
+case ${had_error+x} in x)
+	[ "$had_error" -ne 0 ] || exit 1
+	exit "$had_error" 
+esac

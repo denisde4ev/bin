@@ -1,0 +1,6 @@
+#!/bin/sh -eu
+#PATH=$(getconf PATH) HOME=${XDG_CONFIG_HOME:?}/firefox exec "${0##*/}" "$@"
+#PATH=$(getconf PATH) exec "${0##*/}" "$@"
+
+HOME=${XDG_CONFIG_HOME:?}/firefox
+export HOME
