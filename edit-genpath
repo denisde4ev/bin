@@ -1,19 +1,33 @@
 #!/bin/sh
 set -eu
 
-tmpd=$(mktemp -d)
+case $1 in --help)
+printf %s\\n \
+"Usage: ${0##*?} [diff args]... <FILE TO EDIT>" \
+" edit file and output the diff stdout" \
+" edited changes are aplyed to the file!" \
+\
+" todo/bug: do not provide '--' for end of args,"\
+" (hardcoded) only last arg is used as file to edit" \
+;
+exit
+esac
+
+{
+t=$(mktemp -u)
+trap 'rm -f -- "$t"' EXIT QUIT KILL
 
 ## file=$1; shift # can not use aliases in this way
-. ~/B/__sourceable/pop_to_i.sh
-file=${i?}; unset i
+. ~/B/__sourceable/pop_to_i.sh || exit
+# file=${i?}; unset i
+# HOPE
 
-printf %s\\n >&2 "patch will be saved in dir: $tmpd"
+# printf %s\\n >&2 "patch will be saved in dir: $tmpd"
 
+cp -f -- "${i?}" "$t"
+"${EDITOR:-vi}" "$i"
+} >&2 # just in case
 
-cp -- "$file" "$tmpd/${1##*/}.original-file"
-${EDITOR:-vi} "$file"
+diff "$@" -- "$i" "$t" # consider using -s (non-POSIX)
 
-diff "$@" -- "$file" "$tmpd/${1##*/}.original-file" > "$tmpd/${1##*/}.patch" || \
-	case $? in 1) ;; *) exit;; esac
-
-printf %s\\n "patch saved to: $tmpd/${1##*/}.patch"
+#printf %s\\n "patch saved to: $tmpd/${1##*/}.patch"

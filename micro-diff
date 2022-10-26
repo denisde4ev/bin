@@ -20,7 +20,7 @@ case $# in
 	1) i=$1; shift;;
 	2) i=$2; set -- "$1";; # most of the times -> expected from my `alias micro-diff='\micro-diff --color=auto'`
 	# consider adding more...: (:/) when run `micro-diff -U 10 --color file` $# = 4 and tish one is frequently used by me
-	*) unset i; . ~/B/__sourceable/pop_to_i.sh || echo $?;;
+	*) unset i; . "${B?}"/__sourceable/pop_to_i.sh || echo $?;;
 
 
 esac
@@ -31,7 +31,7 @@ esac
 case ${i+i}:${i-} in
 :|i:-*)  # if no arguments or if last arg is armument (woraround for this check is ./-file)
 	ll_or_print=$micro_conf_bac
-	. ~/B/__sourceable/ll_or_print.sh
+	. "${B?}"/__sourceable/ll_or_print.sh
 
 
 

@@ -12,13 +12,15 @@ printf %s\\n \
 	"" \
 	"  new|mk      -> \$0 add" \
 	"  rm          -> \$0 del" \
+	"  ls          -> sudo btrfs subvolume list" \
+	"  ll          -> sudo btrfs subvolume list @ -p -c -g -u  -t" \
 	"  add         -> sudo btrfs subvolume create" \
 	"  stat        -> sudo btrfs subvolume show" \
 	"  del         -> sudo btrfs subvolume delete" \
-	"  set *=*     -> sudo btrfs property set % *1 *2" \
-	"  set *       -> sudo btrfs property set % *  true" \
-	"  get (*|all) -> btrfs property get % *" \
-	"  unset *     -> sudo btrfs property set % *  false" \
+	"  set *=*     -> sudo btrfs property set @ *1 *2" \
+	"  set *       -> sudo btrfs property set @ *  true" \
+	"  get (*|all) -> btrfs property get @ *" \
+	"  unset *     -> sudo btrfs property set @ *  false" \
 	"" \
 	"  snap        -> sudo btrfs subvolume snapshot" \
 	"  mv          -> sudo mv <SOURCE> <TARGET>" \
@@ -47,27 +49,32 @@ case $1 in -x) shift; esac
 action=$1; shift
 
 case $action in
-	add|new|mk|stat|del|rm|sync) case $# in 0)   false; esac;;
-	set|get|unset)               case $# in 0|1) false; esac;;
+	add|new|mk|del|rm) case $# in 0)   false; esac;;
+	set|unset)         case $# in 0|1) false; esac;;
 	# mv|snapdf|du) ;; # not checed, just leave native error
 esac || {
 	printf %s\\n >&2 "too few arguments"
 	exit 2
 }
 
+case $# in 0) case $action in ls|ll|stat|get|df|du|sync) # but not for 'rm|del'
+	set -- .
+esac; esac
 
 case $action in
 	'') printf %s\\n >&2 "see --help for usage"; return 2;;
 
-	add|new|mk) set +e; for i; do btrfs subvolume create "$i"; echo \$\?: $?; done;;
-	stat)       set +e; for i; do btrfs subvolume show   "$i"; echo \$\?: $?; done;;
-	del|rm)     set +e; for i; do btrfs subvolume delete "$i"; echo \$\?: $?; done;;
+	add|new|mk) : "$1"; set +e; for i; do btrfs subvolume create "$i"; echo \$\?: $? >&2; done;;
+	stat)       : "$1"; set +e; for i; do btrfs subvolume show   "$i"; echo \$\?: $? >&2; done;;
+	del|rm)     : "$1"; set +e; for i; do btrfs subvolume delete "$i"; echo \$\?: $? >&2; done;;
+	ls)         : "$1"; set +e; for i; do btrfs subvolume list   "$i"; echo \$\?: $? >&2; done;;
+	ll)         : "$1"; set +e; for i; do btrfs subvolume list   "$i" -p -c -g -u  -t; echo \$\?: $? >&2; done;;
 
 	set)
 		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
 		key=$1; shift
 		case $key in *=*) val=${key#*=}; key=${key%"=$val"};; *) val=true;; esac
-		set +e; for i; do btrfs property set "$i" "$key" "$val"; echo \$\?: $?; done
+		: "$1"; set +e; for i; do btrfs property set "$i" "$key" "$val"; echo \$\?: $? >&2; done
 	;;
 	get)
 		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
@@ -75,17 +82,17 @@ case $action in
 		case $key in all) key=''; esac
 
 		# key might be empty str -> in that case do not send at all
-		set +e; for i; do btrfs property get "$i" ${key:+"$key"}; echo \$\?: $?; done
+		: "$1"; set +e; for i; do btrfs property get "$i" ${key:+"$key"}; echo \$\?: $? >&2; done
 	;;
 	unset)
 		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
 		key=$1; shift
-		set +e; for i; do btrfs property set "$i" "$key" false; echo \$\?: $?; done
+		: "$1"; set +e; for i; do btrfs property set "$i" "$key" false; echo \$\?: $? >&2; done
 	;;
 
-	mv) exec mv "$@";;
+	mv) exec mv "$@";; # a bit pointless, exists for conviniance
 	snap) exec btrfs subvolume snapshot "$@";;
-	df|du|sync) set +e; for i; do btrfs filesystem "$action" "$i"; echo \$\?: $?; done;;
+	df|du|sync) : "$1"; set +e; for i; do btrfs filesystem "$action" "$i"; echo \$\?: $? >&2; done;;
 	# TODO/consider: du and df to be more seemless as native the command
  
 	*) printf %s\\n "unrecognized: '$action', see --help for usage"; exit 2;;

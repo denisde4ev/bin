@@ -1,0 +1,61 @@
+#!/bin/sh
+
+case $1 in --help)
+printf %s\\n \
+	"Usage: ${0##*/} [--args=ARGS TO PASS TO ln] <SYMLINK FILE TO RENAME>..." \
+;
+exit
+esac
+
+
+die() {
+	printf %s\\n >&2 "$1"
+	exit ${2-2}
+}
+
+
+case $1 in --args=*)
+	args=${1#*=}; shift
+	eval "ln() { command ln $args \"\$@\"; }"
+esac
+
+case $1 in
+	--) shift;;
+	-*) die "see --help for usage";;
+esac
+
+
+
+
+t=$(mktemp)
+trap 'rm -f -- "$t"' EXIT QUIT KILL
+
+{
+	printf %s\\n "# output from \`stat -c %N\` is \`'file' -> 'link'\`, please leave only the \`link\` acording to your changes # PLEASE REMOVE THIS LINE!"
+	stat -c %N "$@"
+} > "$t" || exit
+
+"${EDITOR:-vi}" "$t" || exit
+
+t_count=$(wc -l < "$t")
+
+case $t_count in $#) ;; *)
+	die "lines missmatch there is $# files to change, but edited file has $t_count lines"
+esac
+
+
+failed=0
+for file; do
+	IFS= read -r slink || die "cant get new symlink source for '$file' file, got: '$slink'" $?
+
+	unlink -- "$file"
+	ln <&3 -- "$slink" "$file" || {
+		printf %s\\n "failed($?): ln $args${args+ }-- '$slink' '$file'"
+		failed=$(( failed + 1 ))
+	}
+done <"$t" 3<&0
+
+case $failed in 0) ;; *)
+	printf %s\\n >&2 "failed: $failed/$#"
+	exit 1
+esac

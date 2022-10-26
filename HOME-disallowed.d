@@ -1,1 +1,1 @@
-/^/ https:/github.com/denisde4ev/HOME-disallowed/blob/master/
+/^/ https://github.com/denisde4ev/HOME-disallowed/tree/master
