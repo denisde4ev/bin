@@ -45,6 +45,7 @@ failed=0
 for old; do
 	IFS= read -r new || die "cant get new name for '$old' file, got: '$new'" $?
 
+	case $old in "$new") printf %s\\n >&2 "nothing to change for file: '$old'"; continue; esac
 
 	mv <&3 -- "$old" "$new" || {
 		printf %s\\n "failed($?): mv $args${args+ }-- '$old' '$new'"
