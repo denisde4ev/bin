@@ -37,7 +37,7 @@ printf %s\\n "$@" > "$t" || exit
 t_count=$(wc -l < "$t")
 
 case $t_count in $#) ;; *)
-	die "lines missmatch there is $# files to rename, but edited file has $t_count lines"
+	die "lines missmatch there is $# files to mv, but edited file has $t_count lines"
 esac
 
 
