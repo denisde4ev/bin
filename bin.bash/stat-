@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# 
+# TODO: This should be rewritten
+# 1. basename- coud be simplifyed to `sed 's@.*/@@'` and add support to pass --null-data arg
+# 
+# My own legacy file! I dont even remember what I was thinking when I was codding this and it's unmantainable. But it still works.
+# ->  alias '[[[' ']]]' ..... JUST NOO!
+
+[ "$PS4" = "+ " ] && PS4='#$? '
+o=${0##*\/}  # dirname of $0
+o=${o%-}     # remove '-' end
+
+z='' # use null character for I/O # default false of I and O
+nl='
+' # just a new line
+
+command -v shopt >/dev/null && shopt -s expand_aliases # expand aliases
+alias '[[[=case' ']]]=:;;*)false;esac'
+
+# [[[ $o in (Z*) ]]] && { z=zz; o=${o#Z}; }
+case $o in
+	Zin-*) z=i; o=${o#Zin-};;
+	Zout-*) z=o; o=${o#Zout-};;
+	Zio-*) z=io; o=${o#Zio-};;
+	ZZ-*) z=io; o=${o#ZZ-};;
+	Z*) z=io; o=${o#Z};;
+esac
+
+[[[ $@ in (*@*) ]]] || {
+	if [[[ $o in (test) ]]] || (while [ 0 -lt "$#" ];do [ "x--" = "x$1" ]&&exit 0;shift;done;exit 1)
+	then set -- "$@" @
+	else set -- "$@" -- @;
+	fi
+}
+
+[ -n "$z" -a -z "$BASH" ] && {
+	echo >&2 "WARING null io is only supported for bash"
+}
+
+
+
+case $z in
+	io) read_d=; format='%s\0';;
+	i) read_d=; format='%s\n';;
+	o) read_d=$nl; format='%s\0';;
+	*) read_d=$nl; format='%s\n';;
+esac
+
+[[[ $o in (test) ]]] || format= # only print when cmd is 'test'
+
+
+# # arg "$o" "$@"
+# while IFS= read -r -d "$read_d" line
+# do "$o" "${@//%/$line}" && printf "$format" "$line"
+# done
+if IFS= read -r -d "$read_d" line; then
+	while :;do
+		"$o" "${@//@/$line}" && printf "$format" "$line"
+		IFS= read -r -d "$read_d" line || break
+	done
+else
+	echo >&2 "empty input"
+	exit 1
+fi
+
+
+
+exit 0 # TODO: implement if 1 time matches return 0 else 1 ?
+#########################################################################################################################
+#                                                                                                                       #
+#  $o is command to be executed and is get by substing by $o                                                            #
+#  if $o ends with '-' then it is removed from end once                                                                 #
+#  if $o starts with 'Z' then null character I/O is used     (only supported in bash)                                   #
+#  if argumend does not contain %, then '%' is added at the end                                                         #
+#     except when $o is not 'test' then '--' ( if doesn't already exist ) AND '%' are added as 2 arguments at end       #
+#                                                                                                                       #
+#                                                                                                                       #
+#########################################################################################################################
+

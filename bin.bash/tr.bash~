@@ -1,0 +1,32 @@
+#!/bin/bash
+
+
+
+#####
+
+# something seems to not be working well !! TODO:!
+
+#####
+
+
+
+# shliok='qwertyuiop[]asdfghjklzxcvbnm'
+# chertu='чшертъуиопящасдфгхйклзжцвбнм'
+
+err () {
+	echo >&2 "$1"
+	exit ${2:-1}
+}
+
+! [ "$#" = 2 ] && err 'Two strings must be given for translating.'
+[ ${#1} = 0 ] || [ ${#2} = 0 ] && err 'truncating set1, string2 must be non-empty'
+
+str=$(cat)
+
+i=${#1}
+while [ 0 -lt "$i" ]; do
+	i=$((i-1))
+	str=${str//"${1:$i:1}"/"${2:$i:1}"}
+done
+
+printf %s "$str"
