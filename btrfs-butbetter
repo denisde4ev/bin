@@ -26,9 +26,9 @@ printf %s\\n \
 	"  mv          -> sudo mv <SOURCE> <TARGET>" \
 	"  df|du|sync  -> btrfs filesystem (df|du|sync)" \
 	"" \
-	"note: this script is not ment to eleminate need to call btrfs command," \
-	"but to bring most common usages of btrfs easyer and simpler to use" \
-	"from command line (not ment for scripts)" \
+	"note: this script is not meant to eliminate the need to call btrfs command," \
+	"but to bring most common usages of btrfs easier and simpler to use" \
+	"from command line (not meant for scripts)" \
 ;
 exit
 esac
