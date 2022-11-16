@@ -1,0 +1,55 @@
+#!/bin/sh
+
+command -v >&- shopt && shopt -s expand_aliases
+alias '[[[=case' ']]]=:;;*)false;;esac'
+
+which_dirname () {
+	local Z;Z=
+	local A;A=
+	usage () {
+		local o;o=$(basename -- "$0")
+		# case $o in *which.dirname);;*)};;esac
+		[[[ $o in (*which.dirname) ]]] || o=$FUNC_NAME:-which_basename
+		cat - << EOF
+Usage: $o [options] <commands>
+  -Z            separate lines by NUL characters
+  -A            which Print all matches in PATH, not just the first
+  --help|-h|-?  display this message
+EOF
+	}
+	# alias '[[[=case' ']]]=:;;*)false;;esac'
+	while [ 0 -lt "$#" ] ; do
+		case $1 in
+			--help) usage; return ;;
+			[!-]*) break;;
+			-*[!AZh?-]*) break;;
+		esac
+		[[[ $1 in (*[h?]*) ]]] && usage return
+		[[[ $1 in (*A*) ]]] && A=1
+		[[[ $1 in (*Z*) ]]] && Z=Z
+		shift
+	done
+
+	# eval "
+	local N
+	# set -x
+	if [[[ $Z in (Z) ]]]
+	then N=
+	else N='\n'
+	fi
+	for i; do
+		i=$(which ${A:+'--all'} -- "$i") && printf "%s${N:-\\0}" "${i%'
+'}"
+	done | xargs ${Z:+'--null'} --no-run-if-empty dirname ${Z:+-z} --
+	# ";
+}
+
+(
+o=$(basename -- "$0")
+Z=${o%%[!Z]*}
+[[[ ${o#Z} in (which.dirname) ]]] && which_dirname ${Z:+-Z} "$@"
+# case  in
+	# )
+# esac
+)
+	

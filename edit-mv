@@ -1,5 +1,8 @@
 #!/bin/sh
 
+
+# TODO: add to ignored: '.' and '..'
+
 case $1 in --help)
 printf %s\\n \
 	"Usage: ${0##*/} [--args=ARGS TO PASS TO MV] [FILE TO RENAME]..." \
