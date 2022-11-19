@@ -5,10 +5,11 @@ set -eu
 case $# in 0) printf %s\\n >&2 "see --help for usage"; exit 2; esac
 
 case ${1-} in --help)
+o=${0##*/}
 printf %s\\n \
-	"Usage: ${0##*/} <new|mk|stat|rm|set.*|unset.*|get.*> <SUBVOL>..." \
-	"       ${0##*/} <snap|mv> <SOURCE> <TARGET>" \
-	"       ${0##*/} <df|du> [arg]..." \
+	"Usage: $o <new|mk|stat|rm|set.*|unset.*|get.*> <SUBVOL>..." \
+	"       $o <snap|mv> <SOURCE> <TARGET>" \
+	"       $o <df|du> [arg]..." \
 	"" \
 	"  new|mk      -> \$0 add" \
 	"  rm          -> \$0 del" \
@@ -29,6 +30,10 @@ printf %s\\n \
 	"note: this script is not meant to eliminate the need to call btrfs command," \
 	"but to bring most common usages of btrfs easier and simpler to use" \
 	"from command line (not meant for scripts)" \
+	"" \
+	"size note:" \
+	"min compression: $o set compression=lzo" \
+	"max compression: $o set compression=zlib:9" \
 ;
 exit
 esac

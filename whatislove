@@ -1,0 +1,6 @@
+#!/bin/sh
+echo What is love\?
+echo Oh baby, don"'"t hurt me
+echo Don"'"t hurt me
+case $1 in --stderr) echo Don"'"t hurt me >&2; esac
+echo No more...
