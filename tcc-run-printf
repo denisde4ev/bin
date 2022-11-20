@@ -1,0 +1,36 @@
+#!/bin/sh
+
+case $1 in --help) printf %s\\n "Usage: ${0##*/} [-v] <C code to eval>"; exit; esac
+case $1 in -v) shift; tcc() { unset -f tcc; tee-fd 2 | tcc "$@"; }; esac
+
+
+{
+	printf %s\\n \
+		"#include <stdio.h>" \
+		"" \
+		"int main(){" \
+		"	printf(" \
+	;
+
+	while :; do
+
+		case $i in
+			*["\"'()"]*) printf %s "		$1";;
+			*)           printf %s "		\"$1\"";;
+		esac
+
+		shift
+		case $# in 0) break; esac
+		printf %s\\n ","
+
+	continue; done
+
+
+	printf %s\\n "" \
+		"	);" \
+		"	return 0;" \
+		"}" \
+	;
+} | {
+	tcc -run -
+}
