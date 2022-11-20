@@ -1,0 +1,4 @@
+#!/bin/sh
+
+. "${B?}"/_loadable/_git__.sh
+_git__ "$@"
