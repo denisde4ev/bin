@@ -1,0 +1,26 @@
+#!/bin/sh
+
+echo >&2 "todo"
+exit 123
+
+
+bat -l markdown << EOF-markdown
+todo
+
+
+from:
+diff -r -q a b
+Symbolic links a/l and b/l differ
+Files a/f and b/f differ
+Only in a/d: a
+Only in a: a
+
+to:
+@@- a
+@@+ b
+ l
+ f
+-d/a
+-a
+
+EOF-markdown
