@@ -1,0 +1,4 @@
+#!/bin/sh
+#col -bx | bat -l man -p
+
+col <"$1" -bx | bat -l man -p
