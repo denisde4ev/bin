@@ -7,4 +7,4 @@ esac
 
 #tr -dc a-z1-4 </dev/urandom | tr 1-2 ' \n' | awk 'length==0 || length>5' | tr 3-4 ' ' | sed 's/^ *//' | cat -s | sed 's/ / /g' |fmt | head -n $lines
 printf 'Lorem '
-dd if=/dev/urandom count=1k 2>/dev/null | tr -dc $'a-z \n' | sed -e 's/^  *|  *$//g' -e ' s/  */ /g' | fmt | head -n "${1:-5}"
+dd if=/dev/urandom count=1k 2>/dev/null | tr -dc $'a-z0-9A-Z \n' | sed -e 's/^  *|  *$//g' -e ' s/  */ /g' | fmt | head -n "${1:-5}"
