@@ -1,4 +1,7 @@
 #!/bin/sh
 #col -bx | bat -l man -p
 
-col <"$1" -bx | bat -l man -p
+case $# in
+	0) col -bx | bat -l man -p "$@";;
+	*) col <"$1" -bx | bat -l man -p "$@";;
+esac

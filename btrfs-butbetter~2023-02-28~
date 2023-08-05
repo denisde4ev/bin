@@ -18,6 +18,7 @@ printf %s\\n \
 	"  add         -> sudo btrfs subvolume create" \
 	"  stat        -> sudo btrfs subvolume show" \
 	"  del         -> sudo btrfs subvolume delete" \
+	"  cp          -> btrfs send \$1 | btrfs receive \$2" \
 	"  set *=*     -> sudo btrfs property set @ *1 *2" \
 	"  set *       -> sudo btrfs property set @ *  true" \
 	"  get (*|all) -> btrfs property get @ *" \
@@ -33,7 +34,8 @@ printf %s\\n \
 	"" \
 	"size note:" \
 	"min compression: $o set compression=lzo" \
-	"max compression: $o set compression=zlib:9" \
+	"max(zlib) compression: $o set compression=zlib:9" \
+	"max(zstd) compression: $o set compression=zstd:15" \
 ;
 exit
 esac
@@ -41,6 +43,7 @@ esac
 [ ! -t 1 -o ! -t 2 -o ! -t 0 ] && printf %s\\n >&2 "warning: do not use in scripts"
 
 
+## todo: check if cp needs root
 case $1 in get.*|get|df|df|sync) ;; *) case $USER in root) ;; *)
 	USER=root exec sudo "$0" "$@"
 	exit
@@ -53,18 +56,26 @@ case $1 in -x) shift; esac
 
 action=$1; shift
 
+die() {
+	printf %s\\n "${0##*/}: $1" >&2
+	exit ${2-2}
+}
+
 case $action in
 	add|new|mk|del|rm) case $# in 0)   false; esac;;
-	set|unset)         case $# in 0|1) false; esac;;
+	set|unset)      case $# in 0|1) false; esac;;
+	cp)                case $# in 0|1) false;; 2) true;; *) die "too many arguments for choosen action 'cp'"; esac;; # todo: consider passing arguments, or at least -v/-q ?
+
 	# mv|snapdf|du) ;; # not checed, just leave native error
 esac || {
-	printf %s\\n >&2 "too few arguments"
+	printf %s\\n >&2 "too few arguments for choosen action '$1'"
 	exit 2
 }
 
-case $# in 0) case $action in ls|ll|stat|get|df|du|sync) # but not for 'rm|del'
+case $# in 0) case $action in ls|ll|stat|get|set|df|du|sync) # but not for 'rm|del'
 	set -- .
 esac; esac
+
 
 case $action in
 	'') printf %s\\n >&2 "see --help for usage"; return 2;;
@@ -72,6 +83,7 @@ case $action in
 	add|new|mk) : "$1"; set +e; for i; do btrfs subvolume create "$i"; echo \$\?: $? >&2; done;;
 	stat)       : "$1"; set +e; for i; do btrfs subvolume show   "$i"; echo \$\?: $? >&2; done;;
 	del|rm)     : "$1"; set +e; for i; do btrfs subvolume delete "$i"; echo \$\?: $? >&2; done;;
+	cp)         : "$1"; set +e; btrfs send "$1" | btrfs receive "$2";;
 	ls)         : "$1"; set +e; for i; do btrfs subvolume list   "$i"; echo \$\?: $? >&2; done;;
 	ll)         : "$1"; set +e; for i; do btrfs subvolume list   "$i" -p -c -g -u  -t; echo \$\?: $? >&2; done;;
 
