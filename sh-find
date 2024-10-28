@@ -1,5 +1,12 @@
 #!/bin/bash
 #!/bin/sh
+# only use bash for conviniance of 'dotglob'
+
+#case ${1-} in
+#	-f) shift; exec dash "$0" "$@";; # for fast (TODO: detect if current shell is already dash, if there is env/non-env var from dash)
+#	--) shift;
+#esac
+
 
 # if case $1 in --com= # consider: add --com=command option
 if [ -t 1 ]; then
