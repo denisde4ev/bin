@@ -22,15 +22,16 @@ else
 	}
 fi
 
-i=.
+i=$*
 IFS=''
-shopt -s dotglob
+case ${BASH_VERSION:+x} in x)
+	shopt -s dotglob
+esac
 
 while
-	! comm $i/$* || {
-		YN_confirm -S y continue
-	}
+	! comm $i ||
+	YN_confirm -S y continue
 do
-	i=$i/*
+	i=*/$i
 	printf %s\\n "pattern: $i/$*" >&2 
 done

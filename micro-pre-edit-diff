@@ -17,7 +17,7 @@ case $# in 1) # can handle only one arg/file (and there is no point for parsing 
 	[ ! -f "$j" ] || {
 		[ -f "$1" ] || i=/dev/null
 		printf %s' ' >&2 ${LSLONG_COMMAND:-ls -al} -d -- "$i" "$j"
-		ecoh >&2
+		echo >&2
 
 		${LSLONG_COMMAND:-ls -al} -d -- "$i" "$j"
 		if YN_confirm y 'A backup was detected for this file. Do you want to see the diff output'; then

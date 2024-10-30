@@ -25,7 +25,7 @@ printf %s\\n \
 	"  unset *     -> sudo btrfs property set @ *  false" \
 	"" \
 	"  snap        -> sudo btrfs subvolume snapshot" \
-	"  mv          -> sudo mv <SOURCE> <TARGET>" \
+	"  mv          -> sudo mv <SOURCE> <TARGET>  (note: a bit pointless, exists for conviniance)" \
 	"  df|du|sync  -> btrfs filesystem (df|du|sync)" \
 	"" \
 	"note: this script is not meant to eliminate the need to call btrfs command," \
