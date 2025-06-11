@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# set -ue
+
+# SOURCE: /bin/neofetch
+
+
+# cache_uname() {
+    # Cache the output of uname so we don't
+    # have to spawn it multiple times.
+    IFS=" " read -ra uname <<< "$(uname -srm)"
+
+    kernel_name="${uname[0]}"
+    kernel_version="${uname[1]}"
+    kernel_machine="${uname[2]}"
+
+    if [[ "$kernel_name" == "Darwin" ]]; then
+        IFS=$'\n' read -d "" -ra sw_vers <<< "$(awk -F'<|>' '/key|string/ {print $3}' \
+                            "/System/Library/CoreServices/SystemVersion.plist")"
+        for ((i=0;i<${#sw_vers[@]};i+=2)) {
+            case ${sw_vers[i]} in
+                ProductName)          darwin_name=${sw_vers[i+1]} ;;
+                ProductVersion)       osx_version=${sw_vers[i+1]} ;;
+                ProductBuildVersion)  osx_build=${sw_vers[i+1]}   ;;
+            esac
+        }
+    fi
+# }
+
+# get_os() {
+    # $kernel_name is set in a function called cache_uname and is
+    # just the output of "uname -s".
+    case $kernel_name in
+        Darwin)   os=$darwin_name ;;
+        SunOS)    os=Solaris ;;
+        Haiku)    os=Haiku ;;
+        MINIX)    os=MINIX ;;
+        AIX)      os=AIX ;;
+        IRIX*)    os=IRIX ;;
+        FreeMiNT) os=FreeMiNT ;;
+
+        Linux|GNU*)
+            os=Linux
+        ;;
+
+        *BSD|DragonFly|Bitrig)
+            os=BSD
+        ;;
+
+        CYGWIN*|MSYS*|MINGW*)
+            os=Windows
+        ;;
+
+        *)
+            printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." >&2
+            printf '%s\n' "Open an issue on GitHub to add support for your OS." >&2
+            exit 1
+        ;;
+    esac
+# }
+
+
+# get_local_ip() {
+    case $os in
+        "Linux" | "BSD" | "Solaris" | "AIX" | "IRIX")
+            local_ip="$(ip route get 1 | awk -F'src' '{print $2; exit}')"
+            local_ip="${local_ip/uid*}"
+            [[ -z "$local_ip" ]] && local_ip="$(ifconfig -a | awk '/broadcast/ {print $2; exit}')"
+        ;;
+
+        "MINIX")
+            local_ip="$(ifconfig | awk '{printf $3; exit}')"
+        ;;
+
+        "Mac OS X" | "macOS" | "iPhone OS")
+            local_ip="$(ipconfig getifaddr en0)"
+            [[ -z "$local_ip" ]] && local_ip="$(ipconfig getifaddr en1)"
+        ;;
+
+        "Windows")
+            local_ip="$(ipconfig | awk -F ': ' '/IPv4 Address/ {printf $2 ", "}')"
+            local_ip="${local_ip%\,*}"
+        ;;
+
+        "Haiku")
+            local_ip="$(ifconfig | awk -F ': ' '/Bcast/ {print $2}')"
+            local_ip="${local_ip/, Bcast}"
+        ;;
+    esac
+# }
+
+
+
+set -- "$local_ip"
+# trim() {
+    # set -f
+    # shellcheck disable=2048,2086
+    # set -- $*
+    printf '%s\n' "${*//[[:space:]]/}"
+    # set +f
+# }
+
