@@ -1,7 +1,24 @@
 #!/bin/sh
-#col -bx | bat -l man -p
 
-case $# in
-	0) col -bx | bat -l man -p "$@";;
-	*) col <"$1" -bx | bat -l man -p "$@";;
-esac
+# if this breaks (update from / blame) src:  https://github.com/sharkdp/bat/blob/master/README.md#:~:text=MANPAGER=
+
+# was working before
+#case $# in
+#	#0) col -bx | bat -l man -p "$@";;
+#	#0) col -bx | bat    -l man -p --pager less --theme default "$@";;
+#	#*) col <"$1" -bx | bat -l man -p "$@";;
+#esac
+
+# never tested with arguments 
+exec sed -u -e "s/\x1B\[[0-9;]*m//g; s/.\x08//g" "$@" | bat -p -lman
+
+# for test:
+##sed -u -e "s/\x1B\[[0-9;]*m//g; s/.\x08//g" "$@" | bat -A
+
+# never tested:
+#case $# in
+#
+#	0) sed -u -e "s/\x1B\[[0-9;]*m//g; s/.\x08//g" | bat -p -lman
+#	*) sed -u -e "s/\x1B\[[0-9;]*m//g; s/.\x08//g" "$@" | bat -p -lman
+#esac
+
