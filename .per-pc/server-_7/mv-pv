@@ -1,0 +1,86 @@
+#!/bin/sh
+# File: mv-pv
+
+no_target_dir_mode="auto" 
+pv_opts=""
+NEW_LINE="${NEW_LINE:-"
+"}"
+
+# Parse no_target_dir_mode flag if present
+case $1 in
+	-t|-T) no_target_dir_mode=$1 shift ;;
+	--help) printf %s\\n >&2 "Usage: $0 [-t|-T] [pv_options] [--] <source1> [source2 ...] <destination>"; exit;;
+esac
+
+# Parse pv options until "--"
+#while [ "$#" -gt 0 ]; do
+while case $# in 0) false; esac; do
+	case $1 in
+		--) shift; break; ;;
+		-*) pv_opts="${pv_opts}${NEW_LINE}$1"; shift; ;;
+		*)  break;;
+	esac
+done
+
+# Check that at least one source and a destination remain
+#if [ "$#" -lt 2 ]; then
+case $# in 0|1)
+	printf %s\\n >&2 "see --help for usage"
+	exit 2
+esac
+#fi
+
+
+# If no_target_dir_mode is auto, determine based on number of sources
+case $no_target_dir_mode in "auto")
+	# seems pointless: set -- "$@"  # make sure positional parameters are reset
+	if case $# in 2) ;; *) false; esac && [ ! -d "$2" ]; then
+		no_target_dir_mode="-T"
+		# dest=$2 # micro optimization: could be optimized, but not that big of a deal
+	else
+		no_target_dir_mode="-t"
+	fi
+esac
+
+# Grab destination (last argument)
+for dest; do :; done
+failed=0
+
+
+
+
+# Process all but the last argument
+#while [ "$#" -gt 1 ]; do
+while case $# in 1|0) false; esac; do
+	src=$1
+	shift
+
+	if [ ! -f "$src" ]; then
+		printf %s\\n >&2 "Skipping '${src}': Not a regular file." # NOTE:! not quoting values
+		continue
+	fi
+
+	case $no_target_dir_mode in
+		#base=$(basename -- "${src}")
+		-t) base="${src##*/}"; target="${dest}/${base}" ;;
+		-T) target="$dest";;
+	esac
+
+	# TODO:!!! does not support moving folders or creating parents of folders, should support it 
+	printf %s\\n >&2 "Moving '${src}' to '${target}'..." # NOTE:! not quoting values when printing
+	if ( set -f; IFS="$NEW_LINE"; pv ${pv_opts} "$src" > "$target"); then
+		rm "${src}"
+		printf %s\\n >&2 "Moved '${src}'."
+	else
+		printf %s\\n >&2 "Error moving '${src}'." # NOTE:! not quoting value when printing
+		failed=$(( failed + 1 ))
+	fi
+done
+
+
+
+case $failed in 0) ;; *)
+	printf %s\\n >&2 "failed to move ${failed} files"
+	exit 1
+esac
+

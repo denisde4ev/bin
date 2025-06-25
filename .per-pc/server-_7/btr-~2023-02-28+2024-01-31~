@@ -1,0 +1,117 @@
+#!/bin/sh
+# File: btr-~2023-02-28+2024-01-31~
+case $1 in -x) set -x; esac
+set -eu
+
+case $# in 0) printf %s\\n >&2 "see --help for usage"; exit 2; esac
+
+case ${1-} in --help)
+o=${0##*/}
+printf %s\\n \
+	"Usage: $o <new|mk|stat|rm|set.*|unset.*|get.*> <SUBVOL>..." \
+	"       $o <snap|mv> <SOURCE> <TARGET>" \
+	"       $o <df|du> [arg]..." \
+	"" \
+	"  new|mk      -> \$0 add" \
+	"  rm          -> \$0 del" \
+	"  ls          -> sudo btrfs subvolume list" \
+	"  ll          -> sudo btrfs subvolume list @ -p -c -g -u  -t" \
+	"  add         -> sudo btrfs subvolume create" \
+	"  stat        -> sudo btrfs subvolume show" \
+	"  del         -> sudo btrfs subvolume delete" \
+	"  cp          -> btrfs send \$1 | btrfs receive \$2" \
+	"  set *=*     -> sudo btrfs property set @ *1 *2" \
+	"  set *       -> sudo btrfs property set @ *  true" \
+	"  get (*|all) -> btrfs property get @ *" \
+	"  unset *     -> sudo btrfs property set @ *  false" \
+	"" \
+	"  snap        -> sudo btrfs subvolume snapshot" \
+	"  mv          -> sudo mv <SOURCE> <TARGET>  (note: a bit pointless, exists for conviniance)" \
+	"  df|du|sync  -> btrfs filesystem (df|du|sync)" \
+	"" \
+	"note: this script is not meant to eliminate the need to call btrfs command," \
+	"but to bring most common usages of btrfs easier and simpler to use" \
+	"from command line (not meant for scripts)" \
+	"" \
+	"size note:" \
+	"min compression: $o set compression=lzo" \
+	"max(zlib) compression: $o set compression=zlib:9" \
+	"max(zstd) compression: $o set compression=zstd:15" \
+;
+exit
+esac
+
+[ ! -t 1 -o ! -t 2 -o ! -t 0 ] && printf %s\\n >&2 "warning: do not use in scripts"
+
+
+## todo: check if cp needs root
+case $1 in get.*|get|df|df|sync) ;; *) case $USER in root) ;; *)
+	USER=root exec sudo "$0" "$@"
+	exit
+esac; esac
+
+case $1 in -x) shift; esac
+
+
+# MAIN:
+
+action=$1; shift
+
+die() {
+	printf %s\\n "${0##*/}: $1" >&2
+	exit ${2-2}
+}
+
+case $action in
+	add|new|mk|del|rm) case $# in 0)   false; esac;;
+	set|unset)      case $# in 0|1) false; esac;;
+	cp)                case $# in 0|1) false;; 2) true;; *) die "too many arguments for choosen action 'cp'"; esac;; # todo: consider passing arguments, or at least -v/-q ?
+
+	# mv|snapdf|du) ;; # not checed, just leave native error
+esac || {
+	printf %s\\n >&2 "too few arguments for choosen action '$1'"
+	exit 2
+}
+
+case $# in 0) case $action in ls|ll|stat|get|set|df|du|sync) # but not for 'rm|del'
+	set -- .
+esac; esac
+
+
+case $action in
+	'') printf %s\\n >&2 "see --help for usage"; return 2;;
+
+	add|new|mk) : "$1"; set +e; for i; do btrfs subvolume create "$i"; echo \$\?: $? >&2; done;;
+	stat)       : "$1"; set +e; for i; do btrfs subvolume show   "$i"; echo \$\?: $? >&2; done;;
+	del|rm)     : "$1"; set +e; for i; do btrfs subvolume delete "$i"; echo \$\?: $? >&2; done;;
+	cp)         : "$1"; set +e; btrfs send "$1" | btrfs receive "$2";;
+	ls)         : "$1"; set +e; for i; do btrfs subvolume list   "$i"; echo \$\?: $? >&2; done;;
+	ll)         : "$1"; set +e; for i; do btrfs subvolume list   "$i" -p -c -g -u  -t; echo \$\?: $? >&2; done;;
+
+	set)
+		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
+		key=$1; shift
+		case $key in *=*) val=${key#*=}; key=${key%"=$val"};; *) val=true;; esac
+		: "$1"; set +e; for i; do btrfs property set "$i" "$key" "$val"; echo \$\?: $? >&2; done
+	;;
+	get)
+		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
+		key=$1; shift
+		case $key in all) key=''; esac
+
+		# key might be empty str -> in that case do not send at all
+		: "$1"; set +e; for i; do btrfs property get "$i" ${key:+"$key"}; echo \$\?: $? >&2; done
+	;;
+	unset)
+		case $# in 0|1) printf %s\\n >&2 "too less arguments"; exit 2; esac
+		key=$1; shift
+		: "$1"; set +e; for i; do btrfs property set "$i" "$key" false; echo \$\?: $? >&2; done
+	;;
+
+	mv) exec mv "$@";; # a bit pointless, exists for conviniance
+	snap) exec btrfs subvolume snapshot "$@";;
+	df|du|sync) : "$1"; set +e; for i; do btrfs filesystem "$action" "$i"; echo \$\?: $? >&2; done;;
+	# TODO/consider: du and df to be more seemless as native the command
+ 
+	*) printf %s\\n "unrecognized: '$action', see --help for usage"; exit 2;;
+esac

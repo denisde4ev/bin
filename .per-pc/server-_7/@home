@@ -1,8 +1,1 @@
-#!/bin/bash
-
-read -sp pass: pass
-echo >&2
-read -sp port: port;
-echo >&2
-
-exec ssh `echo "$port" | 7z -so x ~/0/home-ip.7z` ${port+-p $port}
+@home~2022-08-26~

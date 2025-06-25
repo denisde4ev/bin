@@ -1,0 +1,13 @@
+#!/bin/sh
+# File: sh-find~2022-04-09~
+
+i=.
+IFS=''
+
+while
+	! ll -d $i/$* || {
+		YN_confirm y continue
+	}
+do
+	i=$i/*
+done

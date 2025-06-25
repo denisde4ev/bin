@@ -1,0 +1,28 @@
+#!/bin/sh
+# File: sudo~2025-02-19~
+
+unset _sudo_from_stdin
+unset _sudo_args_err
+unset _sudo_background
+unset _sudo_user _sudo_user_val
+
+export SUDO_USER=$(id -un)
+#set -x;
+while getopts ':Sbku:' _sudo_i; do
+	case $_sudo_i in
+		S) _sudo_from_stdin='';;
+		b) _sudo_background='';;
+		u) _sudo_user=''; _sudo_user_val="$OPTARG";;
+		k) ;; # "" well, that is always the case for `su`
+		*) _sudo_args_err='';;
+	esac
+done
+
+case ${_sudo_args_err+x}${_sudo_from_stdin+S} in
+	*x*)
+		printf %s\\n  >&2 "$0: E: note got comples arg that cannot map: $*"
+		exec doas "$@"
+	;;
+	S) shift $(( OPTIND - 1)); exec su "${_sudo_user_val-root}" -c "[ \$# -ne 0 ] && exec \"\$@\" ${_sudo_background+"&"}" -- $';\n' "$@";;
+	*) shift $(( OPTIND - 1)); exec su "${_sudo_user_val-root}" -c "[ \$# -ne 0 ] && exec 0<&9 1>&8 2>&7  9>&- 8>&- 7>&- \"\$@\" ${_sudo_background+"&"}" -- $';\n' "$@" 9<&0 8>&1 7>&2  0</dev/tty 1>/dev/tty 2>/dev/tty;;
+esac

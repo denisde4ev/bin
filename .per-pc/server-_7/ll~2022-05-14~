@@ -1,0 +1,8 @@
+#!/bin/sh
+# File: ll~2022-05-14~
+
+if command -v >/dev/null 2>&1 exa; then
+	exec exa -aalF --time-style iso --group-directories-first "$@"
+else
+	exec ls -alF --group-directories-first "$@"
+fi
