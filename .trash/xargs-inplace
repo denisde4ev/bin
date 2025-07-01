@@ -1,0 +1,55 @@
+#!/bin/sh
+set -eu
+
+# note: command-inplace and xargs-inplace shares some codebase
+# if you edit this consider if that change should be added to other command too
+
+
+case $1 in --help)
+	printf %s\\n >&2 \
+		"Usage: ${0##*/} --command=<COMMAND> <file>..." \
+		"       ${0##*/} -c <COMMAND> <file>..." \
+		"  read files from stdin" \
+		"  pipe files one by one to COMMAND and save it to temp file" \
+		"  and then (if exit status is 0) overwrites file" \
+		"" \
+		"Options:" \
+		"  -c|--command  command to execute " \
+		"  -0            Input is separated by NULs" \
+		"" \
+		"This command unlike xargs will will not execute the COMMAND if input is empty (does not have -r option)" \
+	;
+	exit
+esac
+
+unset null_data
+while case $# in 0) false; esac; do
+	case $1 in
+		-0) null_data='';;
+		--) shift; break;;
+		-*) printf %s\\n "unrecognized option: $1" >&2; exit 2;;
+		*) break;;
+	esac
+	shift
+#
+#
+done
+
+case $# in 0) printf %s\\ "missing COMMAND, see --hepl for usage" >&2; exit 2; esac
+
+# note: -d option is not POSIx but most shells supports it.
+# Don't detect, just leave it like this,
+# error message should be correct and will exit with non zero.
+while IFS= read -r ${null_data+-d ''} file; do
+
+	"$@" < "$file" > "$file~i.$$~" || {
+		printf %s\\n "${0##*/}: for file '$file' command eval exit status: $?"
+		rm -v -- "$file~i.$$~"
+		continue
+	}
+
+	case ${MV_COMMAND_SUPPORTS_ARGT+T} in T) ;; *)
+		[ ! -d "$file" ] || rm -v -- "$file" || continue
+	esac
+	mv -vf${MV_COMMAND_SUPPORTS_ARGT+T} -- "$file~i.$$~" "$file"
+done
