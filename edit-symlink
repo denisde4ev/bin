@@ -49,8 +49,8 @@ for file; do
 	IFS= read -r slink || die "cant get new symlink source for '$file' file, got: '$slink'" $?
 
 	unlink -- "$file"
-	ln -s <&3 -- "$slink" "$file" || {
-		printf %s\\n "failed($?): ln $args${args+ }-- '$slink' '$file'"
+	ln -sn <&3 -- "$slink" "$file" || {
+		printf %s\\n "failed($?): ln -sn $args${args+ }-- '$slink' '$file'"
 		failed=$(( failed + 1 ))
 	}
 done <"$t" 3<&0

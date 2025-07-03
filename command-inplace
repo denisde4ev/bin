@@ -1,1 +1,76 @@
-/^/ https://github.com/denisde4ev/bin-win/raw/master/bin/command-inplace
+#!/bin/sh
+set -eu
+case $1 in -x) shift; set -x; esac
+
+# note: command-inplace and xargs-inplace shares some codebase
+# if you edit this consider if that change should be added to other command too
+# TODO: migrate some changes? or better just rm xargs-inplace, I don't remember the last time I used it
+
+# for now hardcode
+#verbose_opt=-v
+verbose_opt=''
+
+
+case $1 in --help)
+	printf %s\\n >&2 \
+		"Usage: ${0##*/} [--command=|-c]<COMMAND> <file>..." \
+		"  pipe files one by one to COMMAND and save it to temp file" \
+		"  and then (if exit status is 0) overwrites file" \
+		"" \
+		"Options:" \
+		"  -c|--command  command to execute " \
+	;
+	exit
+esac
+
+unset command
+while case $# in 0) false; esac; do
+	case $1 in
+		--command=*) command=${1##*=};;
+		--command|-c) command=${2}; shift;;
+		-c*) command=${1#"-c"};;
+		--) shift; break;;
+		-*) printf %s\\n "${0##*/}: unrecognized option: $1" >&2; exit 2;;
+		*) break;;
+	esac
+	shift
+done
+
+case ${command+x} in '')
+	case $# in
+		0)
+			printf %s\\ "${0##*/}: missing COMMAND option, see --help for usage" >&2
+			exit 2
+		;;
+		1)
+			printf %s\\ "${0##*/}: missing file/s arguments, see --help for usage" >&2
+			exit 2
+		;;
+	esac
+	command=$1
+esac
+
+#
+#
+#
+
+failed=0
+
+for file; do
+	# TODO: add  trap to remov file
+	eval "$command" < "$file" > "$file~command-inplace.$$~" || {
+		printf %s\\n "E: for file '$file' command eval exit status: $?"
+		rm $verbose_opt -- "$file~command-inplace.$$~"
+		continue
+	}
+
+	case ${MV_COMMAND_SUPPORTS_ARGT+T} in T) ;; *)
+		[ ! -d "$file" ] || rm $verbose_opt -- "$file" || continue
+	esac
+	mv $verbose_opt -f${MV_COMMAND_SUPPORTS_ARGT+T} -- "$file~command-inplace.$$~" "$file"
+done
+
+case $failed in 0) ;; *)
+	printf %s\\ "E: some failed, count: $failed"
+	exit 1
+esac

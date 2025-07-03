@@ -1,0 +1,156 @@
+#!/bin/sh
+set -eu
+
+case $# in 0) set -- reconfig; esac
+
+case ${1-} in
+--help)
+	printf %s\\n \
+		"usage: ${0} {reconfig|print-new-config|gen-patch|overwrite}" \
+		"" \
+		"default: reconfig" \
+		"{reconfig|overwrite} will overwrite|patch ./.git/config" \
+	;
+	exit
+	;;
+
+# undocumented aliases:
+patch) action=reconfig; shift;;
+new|cat) action=print-new-config; shift;;
+
+reconfig|print-new-config|gen-patch|overwrite|_eval=*)
+	action=$1
+	shift
+	;;
+*)
+	printf %s\\n >&2 'see --help, for usage'
+	exit 2
+esac
+
+
+# define var reponame:
+reponame=${reponame:-${repo-}}
+case ${reponame:+x} in '')
+	printf %s 'reponame: ' >&2; read reponame
+esac
+: "${reponame:?}"
+
+
+case $action in reconfig)
+	# check if the git config is brand new:
+	# when only [core] config is defined
+	# then overwirte the old one
+	case $(cksum ./.git/config) in '1111929013 92 '*)
+		printf %s\\n >&2 "note: overwriting the old config"
+		action=overwrite
+	esac
+esac
+
+# todo: fix if remote.origin.url is not as expected:
+# for example:
+# url = https://github.com/denisde4ev/${reponame}
+# url = http://github.com/denisde4ev/${reponame}.git
+# url = ssh://github.com:denisde4ev/${reponame}
+#
+# FORNOW: leave it to user to fix it in patch.rej ...
+
+unset x
+
+case $action in
+
+
+
+reconfig)
+	# TODO: patch command fails propbaly wrond usage/args/wrong-input from this script ...
+	# > patch: **** Only garbage was found in the patch input
+
+	# F* patch command too complicated....
+	# REQUIRES: full-patch: /^/ https://github.com/denisde4ev/bin-win/raw/60912ef/bin/full-patch
+
+	f=./.git/config # fp=file=
+	fp=$f.patch # fp=filepatch=
+	cat > "$fp" || exit
+{
+	while :; do # LABEL: reconfig
+		x=0
+
+		full-patch --del-lines=3 "$f" <"$fp" || x=$?
+		case $x in 1) ;; *) # 1 => expected error, continue manually patching the file by editor... RECONSIDER: is this good practice?..
+			rm -f "$fp"
+			break 1; # BREAK-LABEL: reconfig
+		esac
+		printf %s\\n >&2 \
+			"note: failed to apply patch" \
+			"make change to '$f'" \
+			"or erase to 0 bites '$fp'" \
+			"to trigger patch applyed manually." \
+		;
+		printf %s >&2 "Press enter to open editor..."; read _; echo >&2
+
+		i=$(cksum "$f")
+		"${EDITOR:-vi}" "$f" "$fp"
+		if [ ! -s "$fp" ]; then # if patch file is erased
+			printf %s\\n >&2 "ok: patch file erased"
+			rm -f "$fp"
+			x=$?; break 1; # BREAK-LABEL: reconfig
+		fi
+		case $i in "$(cksum "$f")") ;; *) # if file is changed
+			printf %s\\n >&2 "ok: file have changes"
+			rm -f "$fp"
+			x=$?; break 1; # BREAK-LABEL: reconfig
+		esac
+
+		printf %s\\n >&2 \
+			"editor did't made any changes to '$f'," \
+			"neither erased the content of '$fp'." \
+			"leaving unremoved file: '$fp'" \
+		;
+		x=1;
+	break; done; # LABEL-END: reconfig
+} <&3
+	;;
+
+
+
+print-new-config)
+	sed -ne '1,/^@@/d; s/^[ +]//p'
+	;;
+
+gen-patch)
+	cat
+	;;
+
+overwrite)
+	sed -ne '1,/^@@/d; s/^[ +]//p' > ./.git/config
+	;;
+
+_eval=*) # note: undocumented
+	eval "${action#*=}"
+	;;
+
+
+
+esac 3<&0 < ~/.config/git/git-reconfig.d/by-hostname/"${HOSTNAME:-$(hostname)}".patch
+
+case ${x=$?} in 0) ;; *) exit $x; esac # if err, exit
+
+case $action in reconfig|overwrite) # if action that modifyed git-config
+
+	# code expect my config to have edited/moved remotes.origin] to remotes.github
+	# todo/consider: short detection if this is the case for current config,
+	# but not extremely necessary, still can decline in YN_confirm.
+
+	fold=.git/refs/remotes/origin
+	fnew=.git/refs/remotes/github
+	[ -d "$fold" ] || exit 0
+	if [ -d "$fnew" ]; then
+		printf %s\\n >&2 \
+			"NOTE: Not expected to have dirs '$fold' and '$fnew' at the same time!" \
+			"You probably need to fix it." \
+		;
+		exit 0
+	fi
+
+	YN_confirm y "Do you want to run: mv -viT '$fold' '$fnew'?" || case $? 1) exit 0;; *) exit;; esac
+	mv -viT "$fold" "$fnew"
+esac

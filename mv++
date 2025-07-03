@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /^/\ https:/github.com/denisde4ev/mvpp/raw/sh/mv++ "$@"
+exec /\^/\ https:/github.com/denisde4ev/mvpp/raw/sh/mv++ "$@"
