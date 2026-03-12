@@ -1,0 +1,18 @@
+#!/bin/sh
+
+myWait() {
+	printf 'wait 10s\r'
+	sleep 10
+	printf '        \r'
+}
+
+myWait
+dhclient -r 
+myWait
+ip r g 1
+myWait
+ip link set dev wlan0 down
+myWait
+ip link set dev wlan0 up
+myWait
+dhclient

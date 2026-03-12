@@ -1,0 +1,13 @@
+#!/bin/sh
+
+IFS='
+'
+set -f
+
+set -x
+
+for i in $(abduco -l | tail -n+2 | grep '^ ' |  cut -d '	' -f 4); do
+	/bin/abduco -a -e "${@-^j}" "$i" #/bin/sh
+done
+
+echo >&2 ========= done ==========

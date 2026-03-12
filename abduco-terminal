@@ -1,0 +1,137 @@
+#!/bin/sh
+#set -eu
+
+#case ${ABDUCO_SESSION}
+case ${ABDUCO_SOCKET+x} in x)
+	printf %s\\n >&2 \
+		"do not run abduco-terminal inside another abduco" \
+		${ABDUCO_SESSION+"ABDUCO_SESSION=${ABDUCO_SESSION}"} \
+		${ABDUCO_SOCKET+"ABDUCO_SOCKET=${ABDUCO_SOCKET}"} \
+	;
+	#exit 1
+	sleep >&20
+	##exec /bin/bash
+esac
+
+
+# todo/consider: $TERM_PROGRAM detection
+# only allow known terminals:
+##case $
+
+#	export SHELL=$MY_SHELL
+#esac 
+
+
+# was needed before
+#case ${MY_SHELL_SET+x} in x)
+#	export SHELL="$MY_SHELL_SET"
+#	unset MY_SHELL_SET
+#esac
+
+# case ${ABDUCO_SESSION+x} in # TODO: if abduco name already exists, prompt to rename
+
+case ${ABDUCO_SESSION:+x} in x) ;; *)
+	ABDUCO_SESSION=pid-${PPID}-$$
+
+	case ${SSH_TTY:+x} in x)
+		ABDUCO_SESSION=${ABDUCO_SESSION}-ssh${SSH_TTY##*[!a-zA-Z_0-9]}
+	esac
+
+	ABDUCO_SESSION=${ABDUCO_SESSION}-lvl${SHLVL-x}
+
+esac
+
+case $# in 0)
+	case $ZDOTDIR in '')
+		# TODO: RM THIS WHEN FIXED
+		printf %s\\n  >&2 "adding: ZDOTDIR"
+		export ZDOTDIR="$HOME"/.config/zsh.homeconf # todo: this should go to some env file for user
+	esac
+
+	case ${KITTY_INSTALLATION_DIR+x} in # or check if KITTY_SHELL_INTEGRATION="enabled"
+		x)
+			# in subshell: set -- run-shell --shell="$SHELL"
+			# in continer: kitten run-shell --shell="$SHELL"
+			set -- kitten run-shell --shell="$SHELL"
+			#set -- "${SHELL-/bin/bash}"
+		;;
+		*)
+			case $SHELL in
+				zsh) set -- /bin/bash;; # for now my zsh config is for kitty
+				*) set -- "${SHELL-/bin/bash}";;
+			esac
+		;;
+	esac
+
+esac
+
+abduco_noeditscreen() {
+	{
+		sleep .110
+		printf '\033[?1049l'
+	} &
+	/bin/abduco "$@"
+}
+
+
+
+# note: unfortunately no way to disable
+# -e '' is just interpreted as Ctrl+Space
+# because
+# '' is seen as directly null char '\0' to end in Clang `argv`
+# (space button = 32)
+# (  32  | (32+64)) - (32+64) == 0
+# javascript:(` `.charCodeAt() | 0b11_00000) - 0b11_00000 == `\0`.charCodeAt()
+#
+#
+# sidenote: in same way you can fuckup even more:
+# `^[` is every Alt+** key combination
+# this is also a way to check
+# if program implemented
+# propperly escape sequences,
+# or just char by char checking
+
+
+# -e '' \
+
+# exec
+abduco_noeditscreen -c \
+	-e '' \
+	"$ABDUCO_SESSION" \
+	"$@" \
+;
+errno=$?
+
+
+while
+	case $(abduco -l) in
+		*"$ABDUCO_SESSION"*) true;;
+		*) false;;
+	esac
+do
+	printf %s\\n "ABDUCO DETACHED!"
+	printf %s "enter C/D to exit: "
+	read -r e || e=''
+	case $e in [CcDd]) break; esac
+	sleep .5
+
+	if
+		abduco_noeditscreen -a \
+			-e "^$e" \
+			"$ABDUCO_SESSION" \
+			"echo BAD: abduco failed to attach, will exit now; /home/u1369/.local/bin/pause" \
+		;
+	then
+		errno=''
+	else
+		errno=$?
+		printf %s\\n >&2 "exit status: $errno"
+	fi
+done
+
+
+
+# note 130 = used Ctrl+C
+case $errno in 0|130) ;; ?*)
+	sleep 1.5
+esac

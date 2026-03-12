@@ -6,8 +6,16 @@ set -eu
 
 # based on man page about abduco version: 0.6-6
 
+# 2025-10-06: 
+# updated to version "abduco-git 0.6.48.g8c32909-1" / "abduco-0.6 © 2013-2018 Marc André Tanner"
+# but need description for -p and -q flags
+# and needs update in `Usage:` starting lines
+
+
 case ${1-} in --help)
 	printf %s\\n \
+		"Usage: abduco [-a|-A|-c|-n] [-p] [-r] [-q] [-l] [-f] [-e detachkey] name command" \
+		"" \
 		"Usage: abduco [-e detachkey] [-r] [-f] -c name command [args ...]" \
 		"       abduco [-e detachkey] [-r] [-f] -n name command [args ...]" \
 		"       abduco [-e detachkey] [-r] [-f] [-l] -A name command [args ...]" \
@@ -21,26 +29,24 @@ case ${1-} in --help)
 		"A plus sign + indicates that the command terminated" \
 		"while no client was connected, attach to get its exit status." \
 		"" \
-		"-v|--version    Print version information to standard output and exit." \
+		"Action:" \
+		"    -l|--list" \
+		"    -a|--attach           Attach to an existing session." \
+		"    -A|--attach-create    Try to connect to an existing session, upon failure create said session and attach immediately to it." \
+		"    -c|--create           Create a new session and attach immediately to it." \
+		"    -n|--new              Create a new session but do not attach to it." \
 		"" \
-		"-r|--readonly   Readonly session, i.e. user input is ignored." \
+		"Options:" \
+		"    -p" \
+		"    -r|--readonly   Readonly session, i.e. user input is ignored." \
+		"    -q" \
+		"    -l|--lowest-priority  Attach with the lowest priority, meaning this client will be the last to control the size. " \
+		"    -f|--force      Force creation of session when there is an already terminated session of the same name, after showing its exit status." \
+		"    -e|--detachkey detachkey" \
+		"                    Set the key to detach which by default is set to CTRL+\\ i.e. ^\\ to detachkey." \
+		"    -e<detachkey>|--detachkey=<detachkey>" \
 		"" \
-		"-e|--detachkey detachkey" \
-		"                Set the key to detach which by default is set to CTRL+\\ i.e. ^\\ to detachkey." \
-		"" \
-		"-f|--force      Force creation of session when there is an already terminated session of the same name, after showing its exit status." \
-		"" \
-		"-c|--create     Create a new session and attach immediately to it." \
-		"" \
-		"-n|--new        Create a new session but do not attach to it." \
-		"" \
-		"-A|--attach-create" \
-		"                Try to connect to an existing session, upon failure create said session and attach immediately to it." \
-		"" \
-		"-a|--attach     Attach to an existing session." \
-		"" \
-		"-l|--lowest-priority" \
-		"                Attach with the lowest priority, meaning this client will be the last to control the size. " \
+		"    -v|--version    Print version information to standard output and exit." \
 	;
 	exit
 esac
@@ -54,7 +60,7 @@ for i; do
 	##esac
 
 	case $i in
-		--version)         set -- "$@" -v;;
+		#--version)         set -- "$@" -v;; # note: work as is
 		--readonly)        set -- "$@" -r;;
 		--detachkey)       set -- "$@" -e;;
 		--force)           set -- "$@" -f;;
@@ -63,6 +69,9 @@ for i; do
 		--attach-create)   set -- "$@" -A;;
 		--attach)          set -- "$@" -a;;
 		--lowest-priority) set -- "$@" -l;;
+		--list)            set -- "$@" -l;; # added 2025-10-06
+		-e?*)              set -- "$@" -e "${i#"-e"}";;
+		--detachkey=*)     set -- "$@" -e "${i#"-detachkey="}";;
 		*)                 set -- "$@" "$i";;
 	esac
 
@@ -83,23 +92,27 @@ shift $toshift
 ## )
 
 (
-	case ${1-} in
-			--help) ;; # --version
-			-v) ;; # --version
+	if
+		case ${1-} in
+			--help) false;; # --version
+			-v) false;; # --version
 
-			-e) false;; # --detachkey
+			-a) true;; # --attach
+			-A) true;; # --attach
+			-c) true;; # --create
+			-n) true;; # --new
 
-			-r) false;; # --readonly
+			-e) true;; # --detachkey
+
+			-r) true;; # --readonly
 			#-f) ;; # --force
-			-c) false;; # --create
-			-n) false;; # --new
-			-A) false;; # --attach
-			-a) false;; # --attach
-			-l) case $# in 1) true;; *) false;; esac;; # --list or --lowest
-	esac || {
-		sleep 1
+			-l) case $# in 1) false;; *) true;; esac;; # --list or --lowest
+			*) false;;
+		esac
+	then
+		sleep .1
 		printf '\033[?1049l'
-	}
-)&
+	fi &
+)
 
 exec /usr/bin/abduco "$@"
